@@ -32,6 +32,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.jakewharton:butterknife:6.1.0'
     compile 'com.mapzen:mapzen-android-sdk:1.1.0'
-    //compile 'com.mapzen.android:lost:2.0.0'
+
 
 }
