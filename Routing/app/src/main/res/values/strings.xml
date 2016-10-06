@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Routing</string>
+    <string name="title_activity_main">PWr Routing</string>
+    <string name="vector_tiles_key">valhalla-3rjoxB7</string>
+</resources>
