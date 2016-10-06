@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -101,10 +101,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     // Show rationale and request permission.
                 }
 
-                //map.drawRouteLocationMarker();
+
                 send.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        Thread thread;
+                        map.clearRouteLocationMarker();
+                        map.removePolyline();
+                        startLocationUpdates();
                         starting.setText("PWr, "+mCurrentLocation.getLongitude()+" : "+mCurrentLocation.getLatitude());
                         destination.setText("PWr, 51.10885, 17.06031");
                         map.setPosition(new LngLat(mCurrentLocation.getLongitude(),mCurrentLocation.getLatitude()));
