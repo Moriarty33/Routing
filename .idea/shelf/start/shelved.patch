@@ -1,0 +1,15 @@
+Index: .idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/vcs.xml	(date 1475784844000)
++++ .idea/vcs.xml	(revision )
+@@ -2,5 +2,6 @@
+ <project version="4">
+   <component name="VcsDirectoryMappings">
+     <mapping directory="$PROJECT_DIR$/.." vcs="Git" />
++    <mapping directory="C:\Users\jamin\AndroidStudioProjects\Routing\Routing" vcs="Git" />
+   </component>
+ </project>
+\ No newline at end of file
