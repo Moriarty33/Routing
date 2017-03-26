@@ -20,7 +20,7 @@ import java.util.Objects;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-public class lessons {
+public class Lessons {
 
     public ArrayList<String[]> getrooms(final String s) throws Exception {
         final ArrayList<String[]> lisRooms = new ArrayList<String[]>();
