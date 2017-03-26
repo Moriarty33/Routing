@@ -13,7 +13,7 @@ import java.util.Map;
 public class DialogWindows {
     private MainActivity m;
     private Teachers t = new Teachers();
-    private lessons l = new lessons();
+    private Lessons l = new Lessons();
     Context context;
     Map<String,String> listBuildings = new HashMap<>();
     Map<String,String> listBuildingsLessons = new HashMap<>();
