@@ -4,8 +4,8 @@ package com.pwr.routing;
  * Created by jamin on 18.01.2017.
  */
 
-public class prowadzonce {
-    private prowadzonce[] response;
+public class TeacherDao {
+    private TeacherDao[] response;
     private String prowadzacy_id;
     private String imie_nazwisko;
 
@@ -17,11 +17,11 @@ public class prowadzonce {
         this.prowadzacy_id = prowadzacy_id;
     }
 
-    public prowadzonce[] getResponse() {
+    public TeacherDao[] getResponse() {
         return response;
     }
 
-    public void setResponse(prowadzonce[] response) {
+    public void setResponse(TeacherDao[] response) {
         this.response = response;
     }
 
