@@ -4,11 +4,20 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.EditText;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 
 public class DialogWindows {
     private MainActivity m;
@@ -43,23 +52,37 @@ public class DialogWindows {
     }
 
     public void dialoglistTecher(final int s){
+        TreeSet<String> list = t.getlistTecher();
+       final String[] items =  list.toArray(new String[list.size()]);
 
-        final CharSequence[] items =  t.getlistTecher().toArray(new CharSequence[t.getlistTecher().size()]);
+        final ArrayAdapter<String> adapter = new ArrayAdapter<String>
+                (context, android.R.layout.simple_dropdown_item_1line, items);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        View view = new View(context).findViewById(R.id.dialog_layout);
 
-        builder.setView(view);
-        builder.setTitle("Wybierz Prowadzącego");
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(context);
+        LayoutInflater inflater = LayoutInflater.from(context);
+        final View dialogView = inflater.inflate(R.layout.dialog_teacher, null);
+        dialogBuilder.setView(dialogView);
 
-            builder.setItems(items, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int item) {
-                dialoglisttecherlessons(items[item].toString(),s);
+        final AutoCompleteTextView textView = (AutoCompleteTextView) dialogView.findViewById(R.id.input);
+        textView.setAdapter(adapter);
 
+        dialogBuilder.setTitle("Wybór prowadzącego");
+        dialogBuilder.setMessage("Wpisz nazwisko i imię prowadzącego");
+
+        final AlertDialog b = dialogBuilder.create();
+        b.show();
+        textView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.i("INPUT", adapter.getItem(position).toString());
+                b.hide();
+                InputMethodManager imm = (InputMethodManager) m.getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(textView.getWindowToken(), 0);
+                dialoglisttecherlessons(adapter.getItem(position).toString(),s);
             }
         });
-        AlertDialog alert = builder.create();
-        alert.show();
+
     }
     public void dialoglistbulding(final int s){
         final CharSequence[] items =  listBuildings.keySet().toArray(new CharSequence[listBuildings.keySet().size()]);
@@ -95,7 +118,13 @@ public class DialogWindows {
 
         final CharSequence[] items = listlesson.toArray(new CharSequence[listlesson.size()]);
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Wybierz Zajęcia");
+
+        if(listlesson.size() == 0 ){
+            builder.setTitle("Bląd");
+            builder.setMessage("Niestety w systemie niema zajęć dla " + name);
+        }else {
+            builder.setTitle("Wybierz Zajęcia");
+        }
 
         builder.setItems(items, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int item) {
