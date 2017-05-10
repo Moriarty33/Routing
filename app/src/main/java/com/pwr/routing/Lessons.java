@@ -29,7 +29,7 @@ public class Lessons {
             @Override
             public void run() {
                 try {
-                    URL url = new URL("https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3B%28area%5B\"WroclawGIS%3Abuilding%3AID\"%20%3D%20\"" + s + "\"%5D->.a%3B%2F%2F5691%0Away%5B\"buildingpart\"%5D%28area.a%29%3B%29%3Bout%20body%3B>%3Bout%20skel%20qt%3B");
+                        URL url = new URL("https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3B%28area%5B\"WroclawGIS%3Abuilding%3AID\"%20%3D%20\"" + s + "\"%5D->.a%3B%2F%2F5691%0Away%5B\"buildingpart\"%5D%28area.a%29%3B%29%3Bout%20body%3B>%3Bout%20skel%20qt%3B");
                     URLConnection conn = url.openConnection();
 
                     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -41,7 +41,13 @@ public class Lessons {
                     for (int i = 0; i < nodes.getLength(); i++) {
                         Element element = (Element) nodes.item(i);
                         if (element.getElementsByTagName("tag").item(1) != null) {
-                            String tag = element.getElementsByTagName("tag").item(1).getAttributes().getNamedItem("v").getNodeValue();
+                            String tag = "";
+                            for(int n=0; n< element.getElementsByTagName("tag").getLength();n++){
+                                if(!Objects.equals(element.getElementsByTagName("tag").item(n).getAttributes().getNamedItem("v").getNodeValue(), "room")){
+                                    tag = element.getElementsByTagName("tag").item(n).getAttributes().getNamedItem("v").getNodeValue();
+                                }
+                            }
+
                             String node = element.getElementsByTagName("nd").item(2).getAttributes().getNamedItem("ref").getNodeValue();
                             String lat = null;
                             String lon = null;
@@ -181,7 +187,6 @@ public class Lessons {
                     for (int i = 0; i < nodes.getLength(); i++) {
                         Element element = (Element) nodes.item(i);
                         if (element.getElementsByTagName("tag").item(1) != null) {
-                            String tag = element.getElementsByTagName("tag").item(1).getAttributes().getNamedItem("v").getNodeValue();
                             String node = element.getElementsByTagName("nd").item(2).getAttributes().getNamedItem("ref").getNodeValue();
                             String lat = null;
                             String lon = null;
