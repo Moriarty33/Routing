@@ -134,7 +134,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                         @Override
                                         public void onRouteStart() {
                                             hideLoading();
-                                            hideLoading();
                                             map.removeMarker();
                                             map.clearRouteLocationMarker();
                                             map.removePolyline();
@@ -239,6 +238,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
                                 @Override
                                 public void failure(int i) {
+                                    hideLoading();
+                                    MDToast mdToast = MDToast.makeText(context, "Nie udało się wyliczyć drogi. Spróbuj jeszcze raz", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+                                    mdToast.setGravity(Gravity.BOTTOM,0,400);
+                                    mdToast.show();
                                     Log.e("Eror", i + "");
                                 }
                             });
