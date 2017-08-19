@@ -196,7 +196,7 @@ public class DialogWindows {
                     m.setDestination(null);
                     m.setEndPoint(null,null);
                 }
-                MDToast mdToast = MDToast.makeText(context, "Żaden pokój nie został wybrany", MDToast.LENGTH_LONG, MDToast.TYPE_ERROR);
+                MDToast mdToast = MDToast.makeText(context, "Żadena sala nie została wybrana", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                 mdToast.setGravity(Gravity.BOTTOM,0,400);
                 mdToast.show();
             }
