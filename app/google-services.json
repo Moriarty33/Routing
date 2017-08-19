@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "272543624601",
+    "firebase_url": "https://routing-d0ccd.firebaseio.com",
+    "project_id": "routing-d0ccd",
+    "storage_bucket": "routing-d0ccd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272543624601:android:61e14ac6674034dc",
+        "android_client_info": {
+          "package_name": "com.pwr.routing"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "272543624601-sqmosvstalnd8peanafg0aup5sa39311.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pwr.routing",
+            "certificate_hash": "2a2d244a1d17f9f6fbf8b41c01fe5a6c0adcafcb"
+          }
+        },
+        {
+          "client_id": "272543624601-dqiv7j4gp3sokeh0iqfje5aqpot9pilf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAvI9gi7XVKwwofcM5sOjiJZGpJlosj4o"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "272543624601-dqiv7j4gp3sokeh0iqfje5aqpot9pilf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
