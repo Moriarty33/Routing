@@ -2,9 +2,9 @@ package com.pwr.routing;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
@@ -12,9 +12,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -23,6 +21,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -39,9 +38,6 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.nearby.messages.Strategy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.mapzen.android.graphics.MapFragment;
 import com.mapzen.android.graphics.MapzenMap;
 import com.mapzen.android.graphics.OnMapReadyCallback;
@@ -56,33 +52,14 @@ import com.mapzen.valhalla.Route;
 import com.mapzen.valhalla.RouteCallback;
 import com.valdesekamdem.library.mdtoast.MDToast;
 
-import org.apache.commons.io.IOUtils;
-import org.json.JSONObject;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
-import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.TreeSet;
-
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import butterknife.InjectView;
-
-import static android.R.id.message;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     protected static final String TAG = "location-updates-sample";
@@ -114,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     boolean tasks = false;
     DialogWindows dlg = new DialogWindows(context, this);
     final Timer timerLocation = new Timer();
+    ProgressBar progressBar;
 
     private GoogleApiClient client;
 
@@ -124,6 +102,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         updateValuesFromBundle(savedInstanceState);
         buildGoogleApiClient();
@@ -140,6 +119,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     @Override
                     public void onClick(View v) {
                         if (StartPoint[0] != null && EndPoint[0] != null) {
+                            map.setZoom(18f);
+                            showLoading();
                             Log.i("mLastUpdateTime: ", mLastUpdateTime);
                             startLocationUpdates();
                             final MapzenRouter router = new MapzenRouter(MainActivity.this);
@@ -152,13 +133,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                     RouteListener routeListener = new RouteListener() {
                                         @Override
                                         public void onRouteStart() {
+                                            hideLoading();
+                                            hideLoading();
                                             map.removeMarker();
                                             map.clearRouteLocationMarker();
                                             map.removePolyline();
                                             map.setPosition(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
                                             map.addMarker(new Marker(Double.parseDouble(EndPoint[1]), Double.parseDouble(EndPoint[0])));
                                             map.setRotation(0f);
-                                            map.setZoom(18f);
                                             map.setTilt(0f);
                                             List<LngLat> coordinates = new ArrayList<>();
                                             for (ValhallaLocation location : route.getGeometry()) {
@@ -298,6 +280,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             }
         });
 
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
@@ -594,5 +577,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 }
                 break;
         }
+    }
+
+    public void showLoading() {
+        progressBar.setVisibility(View.VISIBLE);
+        starting.setEnabled(false);
+        destination.setEnabled(false);
+        send.setEnabled(false);
+    }
+
+    public void hideLoading(){
+        progressBar.setVisibility(View.INVISIBLE);
+        starting.setEnabled(true);
+        destination.setEnabled(true);
+        send.setEnabled(true);
     }
 }

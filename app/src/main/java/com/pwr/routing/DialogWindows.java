@@ -92,9 +92,10 @@ public class DialogWindows {
         final CharSequence[] items = listBuildings.keySet().toArray(new CharSequence[listBuildings.keySet().size()]);
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Wybierz budynek");
-
+        m.showLoading();
         builder.setItems(items, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int item) {
+                dialog.dismiss();
                 Log.i("SET:  ", listBuildings.get(items[item]));
                 try {
                     if (s == 0) {
@@ -202,6 +203,7 @@ public class DialogWindows {
             }
 
         });
+        m.hideLoading();
         AlertDialog alert = builder.create();
         alert.show();
 
