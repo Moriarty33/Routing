@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
-    xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/content_main"
@@ -56,10 +55,10 @@
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="5dp"
-                    android:layout_marginBottom="5dp"
+                    android:layout_height="1dp"
+                    android:layout_marginBottom="9dp"
                     android:layout_marginRight="50dp"
-                    android:layout_marginTop="5dp"
+                    android:layout_marginTop="1dp"
                     android:background="@drawable/dotted" />
 
                 <AutoCompleteTextView

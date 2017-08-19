@@ -3,16 +3,23 @@ package com.pwr.routing;
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
@@ -22,9 +29,16 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.nearby.messages.Strategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -40,6 +54,7 @@ import com.mapzen.model.ValhallaLocation;
 import com.mapzen.tangram.LngLat;
 import com.mapzen.valhalla.Route;
 import com.mapzen.valhalla.RouteCallback;
+import com.valdesekamdem.library.mdtoast.MDToast;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
@@ -66,6 +81,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import butterknife.InjectView;
+
+import static android.R.id.message;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     protected static final String TAG = "location-updates-sample";
@@ -95,7 +112,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     String[] EndPoint = new String[2];
     boolean myLokalization = false;
     boolean tasks = false;
-    DialogWindows dlg = new DialogWindows(context,this);
+    DialogWindows dlg = new DialogWindows(context, this);
+    final Timer timerLocation = new Timer();
 
     private GoogleApiClient client;
 
@@ -121,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 send.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if (StartPoint[0] != null || EndPoint[0] != null) {
+                        if (StartPoint[0] != null && EndPoint[0] != null) {
                             Log.i("mLastUpdateTime: ", mLastUpdateTime);
                             startLocationUpdates();
                             final MapzenRouter router = new MapzenRouter(MainActivity.this);
@@ -130,27 +148,25 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                 @Override
                                 public void success(final Route route) {
                                     Log.i("Route", route.getStartCoordinates().getLatitude() + "");
-
-                                    map.removeMarker();
-                                    map.removePolyline();
-                                    map.setPosition(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
-                                    map.addMarker(new Marker(Double.parseDouble(EndPoint[1]), Double.parseDouble(EndPoint[0])));
-                                    map.setRotation(0f);
-                                    map.setZoom(18f);
-                                    map.setTilt(0f);
-                                    List<LngLat> coordinates = new ArrayList<>();
-                                    for (ValhallaLocation location : route.getGeometry()) {
-                                        coordinates.add(new LngLat(location.getLongitude(), location.getLatitude()));
-                                    }
-                                    Polyline polyline = new Polyline(coordinates);
-                                    map.addPolyline(polyline);
-                                    map.drawRouteLocationMarker(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
-
                                     final RouteEngine engine = new RouteEngine();
                                     RouteListener routeListener = new RouteListener() {
-
                                         @Override
                                         public void onRouteStart() {
+                                            map.removeMarker();
+                                            map.clearRouteLocationMarker();
+                                            map.removePolyline();
+                                            map.setPosition(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
+                                            map.addMarker(new Marker(Double.parseDouble(EndPoint[1]), Double.parseDouble(EndPoint[0])));
+                                            map.setRotation(0f);
+                                            map.setZoom(18f);
+                                            map.setTilt(0f);
+                                            List<LngLat> coordinates = new ArrayList<>();
+                                            for (ValhallaLocation location : route.getGeometry()) {
+                                                coordinates.add(new LngLat(location.getLongitude(), location.getLatitude()));
+                                            }
+                                            Polyline polyline = new Polyline(coordinates);
+                                            map.addPolyline(polyline);
+                                            map.drawRouteLocationMarker(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
 
                                         }
 
@@ -218,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                             //use a handler to run a toast that shows the current timestamp
                                             handler.post(new Runnable() {
                                                 public void run() {
-                                                    if (myLokalization == true) {
+                                                    if (myLokalization && isLocationEnabled(context)) {
                                                         Log.d("Handlers", "Called on main thread");
                                                         ValhallaLocation valhallaLocation = new ValhallaLocation();
                                                         valhallaLocation.setBearing(mCurrentLocation.getBearing());
@@ -255,6 +271,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             Log.i("START POINT ", StartPoint[0] + StartPoint[1]);
                             Log.i("END POINT ", EndPoint[0] + EndPoint[1]);
                             router.fetch();
+                        }else{
+                            MDToast mdToast = MDToast.makeText(context, "Wybierz punkt startowy i docelowy", MDToast.LENGTH_SHORT, MDToast.TYPE_INFO);
+                            mdToast.setGravity(Gravity.BOTTOM,0,400);
+                            mdToast.show();
                         }
                     }
                 });
@@ -279,12 +299,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         });
 
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
-    }
-
-    public void myLokalizaction() {
-        StartPoint[0] = String.valueOf(mCurrentLocation.getLatitude());
-        StartPoint[1] = String.valueOf(mCurrentLocation.getLongitude());
-        starting.setText("Moja Lokalizacja");
     }
 
 
@@ -374,6 +388,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         AppIndex.AppIndexApi.end(client, getIndexApiAction());
         client.disconnect();
     }
+
     @Override
     public void onConnected(Bundle connectionHint) {
         Log.i(TAG, "Connected to GoogleApiClient");
@@ -394,7 +409,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void onLocationChanged(Location location) {
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
-        Log.i("YeS:", mLastUpdateTime.toString());
+        Log.i("Update Loaction:", mLastUpdateTime);
     }
 
     @Override
@@ -427,27 +442,157 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 .build();
     }
 
-    public void setStarting(String text){
+    public void setStarting(String text) {
         starting.setText(text);
     }
-    public String getStarting(){
+
+    public String getStarting() {
         return starting.getText().toString();
     }
-    public void setDestination(String text){
+
+    public void setDestination(String text) {
         destination.setText(text);
     }
-    public String getDestination(){
+
+    public String getDestination() {
         return destination.getText().toString();
     }
-    public void setStartPoint(String start1, String start2){
+
+    public void setStartPoint(String start1, String start2) {
         StartPoint[0] = start1;
         StartPoint[1] = start2;
     }
-    public void setEndPoint(String end1, String end2){
+
+    public void setEndPoint(String end1, String end2) {
         EndPoint[0] = end1;
         EndPoint[1] = end2;
     }
-    public void setlokalization(Boolean bool){
+
+    public void setlokalization(Boolean bool) {
         myLokalization = bool;
+    }
+
+    public void myLokalizaction() {
+        if(isLocationEnabled(context)){
+            timerLocation.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(mCurrentLocation != null) {
+                                    StartPoint[0] = String.valueOf(mCurrentLocation.getLatitude());
+                                    StartPoint[1] = String.valueOf(mCurrentLocation.getLongitude());
+                                    setlokalization(true);
+                                    starting.setText("Moja Lokalizacja");
+                                    timerLocation.cancel();
+                            } else {
+                                starting.setText("Wyszukuje lokalizację..");
+                            }
+                        }
+                    });
+                }
+            }, 0, 500);
+        } else {showSettingDialog();}
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == 255 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startLocationUpdates();
+            dlg.switchSelected(0,0);
+        }else {
+            MDToast mdToast = MDToast.makeText(context, "Aplikacja nie ma dostępu do lokalizacji", MDToast.LENGTH_LONG, MDToast.TYPE_ERROR);
+            mdToast.setGravity(Gravity.BOTTOM,0,400);
+            mdToast.show();
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+    public static boolean isLocationEnabled(Context context) {
+        int locationMode = 0;
+        String locationProviders;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
+            try {
+                locationMode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
+
+            } catch (Settings.SettingNotFoundException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            return locationMode != Settings.Secure.LOCATION_MODE_OFF;
+
+        }else{
+            locationProviders = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+            return !TextUtils.isEmpty(locationProviders);
+        }
+
+
+    }
+
+    private void showSettingDialog() {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);//Setting priotity of Location request to high
+        locationRequest.setInterval(30 * 1000);
+        locationRequest.setFastestInterval(5 * 1000);//5 sec Time interval for location update
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+        builder.setAlwaysShow(true); //this is the key ingredient to show dialog always when GPS is off
+
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                final LocationSettingsStates state = result.getLocationSettingsStates();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can initialize location
+                        // requests here.
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied. But could be fixed by showing the user
+                        // a dialog.
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            status.startResolutionForResult(MainActivity.this, 225);
+                        } catch (IntentSender.SendIntentException e) {
+                            e.printStackTrace();
+                            // Ignore the error.
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Location settings are not satisfied. However, we have no way to fix the
+                        // settings so we won't show the dialog.
+                        break;
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        MDToast mdToast;
+        switch (requestCode) {
+            case 225:
+                switch (resultCode) {
+                    case RESULT_OK:
+                        mdToast = MDToast.makeText(context, "Lokalizacja jest włączona", MDToast.LENGTH_SHORT, MDToast.TYPE_SUCCESS);
+                        mdToast.setGravity(Gravity.BOTTOM,0,400);
+                        mdToast.show();
+                        myLokalizaction();
+                        break;
+                    case RESULT_CANCELED:
+                        mdToast = MDToast.makeText(context, "Nie ma dostępu do lokalizacji", MDToast.LENGTH_LONG, MDToast.TYPE_ERROR);
+                        mdToast.setGravity(Gravity.BOTTOM,0,400);
+                        mdToast.show();
+                        break;
+                }
+                break;
+        }
     }
 }
