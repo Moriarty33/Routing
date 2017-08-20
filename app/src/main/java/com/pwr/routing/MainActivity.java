@@ -90,7 +90,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     boolean myLokalization = false;
     boolean tasks = false;
     DialogWindows dlg = new DialogWindows(context, this);
-    final Timer timerLocation = new Timer();
     ProgressBar progressBar;
 
     private GoogleApiClient client;
@@ -119,6 +118,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     public void onClick(View v) {
                         if (StartPoint[0] != null && EndPoint[0] != null) {
                             map.setZoom(18f);
+                            map.setRotation(0f);
+                            map.setTilt(0f);
                             showLoading();
                             Log.i("mLastUpdateTime: ", mLastUpdateTime);
                             startLocationUpdates();
@@ -127,19 +128,18 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             router.setCallback(new RouteCallback() {
                                 @Override
                                 public void success(final Route route) {
+                                    hideLoading();
                                     Log.i("Route", route.getStartCoordinates().getLatitude() + "");
                                     final RouteEngine engine = new RouteEngine();
                                     RouteListener routeListener = new RouteListener() {
                                         @Override
                                         public void onRouteStart() {
-                                            hideLoading();
                                             map.removeMarker();
                                             map.clearRouteLocationMarker();
                                             map.removePolyline();
                                             map.setPosition(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
                                             map.addMarker(new Marker(Double.parseDouble(EndPoint[1]), Double.parseDouble(EndPoint[0])));
-                                            map.setRotation(0f);
-                                            map.setTilt(0f);
+
                                             List<LngLat> coordinates = new ArrayList<>();
                                             for (ValhallaLocation location : route.getGeometry()) {
                                                 coordinates.add(new LngLat(location.getLongitude(), location.getLatitude()));
@@ -238,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                 @Override
                                 public void failure(int i) {
                                     hideLoading();
-                                    MDToast mdToast = MDToast.makeText(context, "Nie udało się wyliczyć drogi. Spróbuj jeszcze raz", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+                                    MDToast mdToast = MDToast.makeText(context, "Nie udało się wyliczyć drogi.", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                                     mdToast.setGravity(Gravity.BOTTOM,0,400);
                                     mdToast.show();
                                     Log.e("Eror", i + "");
@@ -459,12 +459,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     public void myLokalizaction() {
         if(isLocationEnabled(context)){
+            final Timer timerLocation = new Timer();
             timerLocation.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            startLocationUpdates();
                             if(mCurrentLocation != null) {
                                     StartPoint[0] = String.valueOf(mCurrentLocation.getLatitude());
                                     StartPoint[1] = String.valueOf(mCurrentLocation.getLongitude());
@@ -486,8 +488,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == 255 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            startLocationUpdates();
-            dlg.switchSelected(0,0);
+            myLokalizaction();
         }else {
             MDToast mdToast = MDToast.makeText(context, "Aplikacja nie ma dostępu do lokalizacji", MDToast.LENGTH_LONG, MDToast.TYPE_ERROR);
             mdToast.setGravity(Gravity.BOTTOM,0,400);
@@ -585,15 +586,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     public void showLoading() {
         progressBar.setVisibility(View.VISIBLE);
-        starting.setEnabled(false);
-        destination.setEnabled(false);
         send.setEnabled(false);
     }
 
     public void hideLoading(){
         progressBar.setVisibility(View.INVISIBLE);
-        starting.setEnabled(true);
-        destination.setEnabled(true);
         send.setEnabled(true);
     }
 }
