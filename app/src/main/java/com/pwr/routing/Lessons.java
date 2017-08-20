@@ -239,7 +239,7 @@ public class Lessons {
         {
             public void run()
             {
-                MDToast mdToast = MDToast.makeText(context, "Nie ma polączenia z serverem", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+                MDToast mdToast = MDToast.makeText(context, "Nie ma polączenia z serwerem", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                 mdToast.setGravity(Gravity.BOTTOM,0,400);
                 mdToast.show();
             }

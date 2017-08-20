@@ -10,7 +10,6 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -41,8 +40,6 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.mapzen.android.graphics.MapFragment;
 import com.mapzen.android.graphics.MapzenMap;
 import com.mapzen.android.graphics.OnMapReadyCallback;
-import com.mapzen.android.graphics.model.Marker;
-import com.mapzen.android.graphics.model.Polyline;
 import com.mapzen.android.routing.MapzenRouter;
 import com.mapzen.helpers.RouteEngine;
 import com.mapzen.helpers.RouteListener;
@@ -87,10 +84,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     final Context context = this;
     String[] StartPoint = new String[2];
     String[] EndPoint = new String[2];
-    boolean myLokalization = false;
-    boolean tasks = false;
+    boolean myLocation = false;
     DialogWindows dlg = new DialogWindows(context, this);
     ProgressBar progressBar;
+    final RouteEngine engine = new RouteEngine();
 
     private GoogleApiClient client;
 
@@ -110,8 +107,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             public void onMapReady(final MapzenMap map) {
                 map.setPosition(new LngLat(17.059278, 51.108942));
                 map.setZoom(18f);
-                final Timer timer = new Timer();
-                final Handler handler = new Handler();
 
                 send.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -129,24 +124,22 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                 @Override
                                 public void success(final Route route) {
                                     hideLoading();
-                                    Log.i("Route", route.getStartCoordinates().getLatitude() + "");
-                                    final RouteEngine engine = new RouteEngine();
+
                                     RouteListener routeListener = new RouteListener() {
                                         @Override
                                         public void onRouteStart() {
-                                            map.removeMarker();
                                             map.clearRouteLocationMarker();
-                                            map.removePolyline();
-                                            map.setPosition(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
-                                            map.addMarker(new Marker(Double.parseDouble(EndPoint[1]), Double.parseDouble(EndPoint[0])));
+                                            map.clearRouteLine();
+                                            map.clearDroppedPins();
 
                                             List<LngLat> coordinates = new ArrayList<>();
                                             for (ValhallaLocation location : route.getGeometry()) {
                                                 coordinates.add(new LngLat(location.getLongitude(), location.getLatitude()));
                                             }
-                                            Polyline polyline = new Polyline(coordinates);
-                                            map.addPolyline(polyline);
+                                            map.drawRouteLine(coordinates);
+                                            map.setPosition(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
                                             map.drawRouteLocationMarker(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
+                                            map.drawDroppedPin(new LngLat(Double.parseDouble(EndPoint[1]), Double.parseDouble(EndPoint[0])));
 
                                         }
 
@@ -159,80 +152,37 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                             router.setLocation(start);
                                             double[] end = {Double.parseDouble(EndPoint[0]), Double.parseDouble(EndPoint[1])};
                                             router.setLocation(end);
-
-                                            router.fetch();
                                             Log.i("RECALCULATE", "Recalculate");
+                                            router.fetch();
                                         }
 
                                         @Override
                                         public void onSnapLocation(ValhallaLocation originalLocation,
                                                                    ValhallaLocation snapLocation) {
-                                            //Center map on snapLocation
+                                            StartPoint[0] = String.valueOf(snapLocation.getLatitude());
+                                            StartPoint[1] = String.valueOf(snapLocation.getLongitude());
+                                            map.clearRouteLocationMarker();
+                                            map.drawRouteLocationMarker(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
                                             Log.i("RECALCULATE", "Recalculate1");
                                         }
 
                                         @Override
-                                        public void onMilestoneReached(int index, RouteEngine.Milestone milestone) {
-                                            Log.i("RECALCULATE", "Recalculate2");
-                                        }
+                                        public void onMilestoneReached(int index, RouteEngine.Milestone milestone) {}
 
                                         @Override
-                                        public void onApproachInstruction(int index) {
-                                            //String instruction  = route.getRouteInstructions().get(index).getVerbalPreTransitionInstruction();
-                                            //Speak pre transition instruction
-                                            Log.i("RECALCULATE", "Recalculate3");
-                                        }
+                                        public void onApproachInstruction(int index) {}
 
                                         @Override
-                                        public void onInstructionComplete(int index) {
-                                            //String instruction  = route.getRouteInstructions().get(index).getVerbalPostTransitionInstruction();
-                                            //Speak post transition instruction
-                                            Log.i("RECALCULATE", "Recalculate4");
-                                        }
+                                        public void onInstructionComplete(int index) {}
 
                                         @Override
-                                        public void onUpdateDistance(int distanceToNextInstruction, int distanceToDestination) {
-                                            //Update trip summary UI to reflect distance away from destination
-                                            Log.i("RECALCULATE", "Recalculate5");
-                                        }
+                                        public void onUpdateDistance(int distanceToNextInstruction, int distanceToDestination) {}
 
                                         @Override
-                                        public void onRouteComplete() {
-                                            //Show 'you have arrived' UI
-                                            Log.i("RECALCULATE", "Recalculate6");
-                                        }
+                                        public void onRouteComplete() {}
                                     };
-
-
                                     engine.setListener(routeListener);
                                     engine.setRoute(route);
-
-
-                                    TimerTask timerTask = new TimerTask() {
-                                        public void run() {
-
-                                            //use a handler to run a toast that shows the current timestamp
-                                            handler.post(new Runnable() {
-                                                public void run() {
-                                                    if (myLokalization && isLocationEnabled(context)) {
-                                                        Log.d("Handlers", "Called on main thread");
-                                                        ValhallaLocation valhallaLocation = new ValhallaLocation();
-                                                        valhallaLocation.setBearing(mCurrentLocation.getBearing());
-                                                        valhallaLocation.setLatitude(mCurrentLocation.getLatitude());
-                                                        valhallaLocation.setLongitude(mCurrentLocation.getLongitude());
-                                                        engine.onLocationChanged(valhallaLocation);
-                                                        map.clearRouteLocationMarker();
-                                                        map.drawRouteLocationMarker(new LngLat(mCurrentLocation.getLongitude(), mCurrentLocation.getLatitude()));
-
-                                                    }
-                                                }
-                                            });
-                                        }
-                                    };
-                                    if (!tasks) {
-                                        timer.schedule(timerTask, 5000, 10000);
-                                    }
-
                                 }
 
                                 @Override
@@ -244,8 +194,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                     Log.e("Eror", i + "");
                                 }
                             });
-
-                            Log.i("Loc", String.valueOf(myLokalization));
 
                             double[] start = {Double.parseDouble(StartPoint[0]), Double.parseDouble(StartPoint[1])};
                             router.setLocation(start);
@@ -394,7 +342,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void onLocationChanged(Location location) {
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
-        Log.i("Update Loaction:", mLastUpdateTime);
+        Log.i("Update Location:", mLastUpdateTime);
+
+        ValhallaLocation valhallaLocation = new ValhallaLocation();
+        valhallaLocation.setBearing(mCurrentLocation.getBearing());
+        valhallaLocation.setLatitude(mCurrentLocation.getLatitude());
+        valhallaLocation.setLongitude(mCurrentLocation.getLongitude());
+        if(myLocation && engine.getRoute() != null){
+            engine.onLocationChanged(valhallaLocation);
+        }
     }
 
     @Override
@@ -454,7 +410,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     public void setlokalization(Boolean bool) {
-        myLokalization = bool;
+        myLocation = bool;
     }
 
     public void myLokalizaction() {
@@ -587,10 +543,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void showLoading() {
         progressBar.setVisibility(View.VISIBLE);
         send.setEnabled(false);
+        starting.setEnabled(false);
+        destination.setEnabled(false);
     }
 
     public void hideLoading(){
         progressBar.setVisibility(View.INVISIBLE);
         send.setEnabled(true);
+        starting.setEnabled(true);
+        destination.setEnabled(true);
     }
 }
