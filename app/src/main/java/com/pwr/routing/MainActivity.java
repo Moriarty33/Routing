@@ -471,7 +471,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                     setlokalization(true);
                                     starting.setText("Moja Lokalizacja");
                                     timerLocation.cancel();
+                                    hideLoading();
                             } else {
+                                showLoading();
                                 starting.setText("Wyszukuje lokalizację..");
                             }
                         }

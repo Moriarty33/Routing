@@ -24,8 +24,8 @@ import java.util.TreeSet;
 
 public class DialogWindows {
     private MainActivity m;
-    private Teachers t = new Teachers();
-    private Lessons l = new Lessons();
+    private Teachers t;
+    private Lessons l;
     private Context context;
     private Map<String, String> listBuildings = new HashMap<>();
     private Map<String, String> listBuildingsLessons = new HashMap<>();
@@ -33,6 +33,8 @@ public class DialogWindows {
     public DialogWindows(Context ctx, MainActivity M) {
         context = ctx;
         m = M;
+        l = new Lessons(ctx);
+        t = new Teachers(ctx);
     }
 
     public int dialogFirst(final int s) {
@@ -56,6 +58,9 @@ public class DialogWindows {
 
     public void dialogListTeachers(final int s) {
         TreeSet<String> list = t.getlistTecher();
+        if(list.size() == 0){
+            return;
+        }
         final String[] items = list.toArray(new String[list.size()]);
 
         final ArrayAdapter<String> adapter = new ArrayAdapter<String>
@@ -109,6 +114,15 @@ public class DialogWindows {
                 }
 
             }
+        }).setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                MDToast mdToast = MDToast.makeText(context, "Żadny budynek nie został wybrany", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+                mdToast.setGravity(Gravity.BOTTOM,0,400);
+                mdToast.show();
+                m.hideLoading();
+            }
+
         });
         AlertDialog alert = builder.create();
         alert.show();
@@ -214,10 +228,8 @@ public class DialogWindows {
         if (s == 0 && selected != 0) {
             m.setlokalization(false);
         }
-        listBuildingsLessons.put("A-1", "5691");
-        listBuildingsLessons.put("C-3", "47688");
-        listBuildingsLessons.put("C-13", "38857");
         ListBuildings listAvaibleBildings = new ListBuildings();
+        listBuildingsLessons.putAll(listAvaibleBildings.get("C"));
         switch (selected) {
             case 0:
                 if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)

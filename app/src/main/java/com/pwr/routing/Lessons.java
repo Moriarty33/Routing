@@ -1,9 +1,12 @@
 package com.pwr.routing;
 
+import android.content.Context;
 import android.util.Log;
+import android.view.Gravity;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.valdesekamdem.library.mdtoast.MDToast;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
@@ -20,7 +23,14 @@ import java.util.Objects;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import static com.google.android.gms.internal.zzagz.runOnUiThread;
+
 public class Lessons {
+    Context context;
+
+    public Lessons(Context ctx){
+        context = ctx;
+    }
 
     public ArrayList<String[]> getrooms(final String s) throws Exception {
         final ArrayList<String[]> lisRooms = new ArrayList<String[]>();
@@ -29,8 +39,9 @@ public class Lessons {
             @Override
             public void run() {
                 try {
-                        URL url = new URL("https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3B%28area%5B\"WroclawGIS%3Abuilding%3AID\"%20%3D%20\"" + s + "\"%5D->.a%3B%2F%2F5691%0Away%5B\"buildingpart\"%5D%28area.a%29%3B%29%3Bout%20body%3B>%3Bout%20skel%20qt%3B");
+                    URL url = new URL("https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3B%28area%5B\"WroclawGIS%3Abuilding%3AID\"%20%3D%20\"" + s + "\"%5D->.a%3B%2F%2F5691%0Away%5B\"buildingpart\"%5D%28area.a%29%3B%29%3Bout%20body%3B>%3Bout%20skel%20qt%3B");
                     URLConnection conn = url.openConnection();
+                    conn.setConnectTimeout(3000);
 
                     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                     DocumentBuilder builder = factory.newDocumentBuilder();
@@ -65,6 +76,7 @@ public class Lessons {
                         }
                     }
                 } catch (Exception e) {
+                    notAnswer();
                     e.printStackTrace();
                 }
 
@@ -82,6 +94,7 @@ public class Lessons {
                     try {
                         URL url = new URL("https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3B%0A%28way%5B%22WroclawGIS%3Abuilding%3AID%22%20%3D%20%22" + s + "%22%5D%3B%29%3B%0Aout%20body%3B%3E%3B%0Aout%20skel%20qt%3B%0A");
                         URLConnection conn = url.openConnection();
+                        conn.setConnectTimeout(3000);
 
                         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                         DocumentBuilder builder = factory.newDocumentBuilder();
@@ -110,6 +123,7 @@ public class Lessons {
                         }
 
                     } catch (Exception e) {
+                        notAnswer();
                         e.printStackTrace();
                     }
 
@@ -139,6 +153,7 @@ public class Lessons {
                 try {
                     URL url = new URL("http://bronn.iiar.pwr.wroc.pl/json.php?name=" + name);
                     URLConnection conn = url.openConnection();
+                    conn.setConnectTimeout(3000);
                     JSONObject json = new JSONObject(IOUtils.toString(conn.getInputStream(), String.valueOf(Charset.forName("UTF-8"))));
 
                     Log.i("JSON", json.toString());
@@ -152,6 +167,7 @@ public class Lessons {
 
 
                 } catch (Exception e) {
+                    notAnswer();
                     e.printStackTrace();
                 }
 
@@ -177,7 +193,7 @@ public class Lessons {
                 try {
                     URL url = new URL("https://overpass-api.de/api/interpreter?data=%5Bout%3Axml%5D%5Btimeout%3A25%5D%3B%28area%5B%22WroclawGIS%3Abuilding%3AID%22%20%3D%20%22" + s + "%22%5D-%3E.a%3Bway%5B%22buildingpart%22%5D%5B%20%22name%22%3D%22" + r + "%22%5D%28area.a%29%3B%29%3Bout%20body%3B%3E%3Bout%20skel%20qt%3B%0A");
                     URLConnection conn = url.openConnection();
-
+                    conn.setConnectTimeout(4000);
                     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                     DocumentBuilder builder = factory.newDocumentBuilder();
                     Document doc = builder.parse(conn.getInputStream());
@@ -205,6 +221,7 @@ public class Lessons {
                         }
                     }
                 } catch (Exception e) {
+                    notAnswer();
                     e.printStackTrace();
                 }
 
@@ -215,6 +232,18 @@ public class Lessons {
         q.start();
         q.join();
         return lisRooms;
+    }
+
+    private void notAnswer(){
+        runOnUiThread(new Runnable()
+        {
+            public void run()
+            {
+                MDToast mdToast = MDToast.makeText(context, "Nie ma polączenia z serverem", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+                mdToast.setGravity(Gravity.BOTTOM,0,400);
+                mdToast.show();
+            }
+        });
     }
 
 }

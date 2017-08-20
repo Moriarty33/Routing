@@ -1,9 +1,13 @@
 package com.pwr.routing;
 
+import android.content.Context;
 import android.util.Log;
+import android.view.Gravity;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.valdesekamdem.library.mdtoast.MDToast;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
@@ -14,11 +18,14 @@ import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.TreeSet;
 
-/**
- * Created by jamin on 26.03.2017.
- */
+import static com.google.android.gms.internal.zzagz.runOnUiThread;
 
 public class Teachers {
+    Context context;
+    public Teachers(Context ctx){
+        context = ctx;
+    }
+
     public TreeSet<String> getlistTecher() {
 
         final TreeSet<String> lisTeacher = new TreeSet<>();
@@ -29,6 +36,7 @@ public class Teachers {
                 try {
                     URL url = new URL("http://bronn.iiar.pwr.wroc.pl/json.php?prowadzacy");
                     URLConnection conn = url.openConnection();
+                    conn.setConnectTimeout(3000);
                     JSONObject json = new JSONObject(IOUtils.toString(conn.getInputStream(), String.valueOf(Charset.forName("UTF-8"))));
 
                     Log.i("JSON", json.toString());
@@ -44,6 +52,7 @@ public class Teachers {
 
                 } catch (Exception e) {
                     e.printStackTrace();
+                    notAnswer();
                 }
 
 
@@ -57,5 +66,16 @@ public class Teachers {
             e.printStackTrace();
         }
         return lisTeacher;
+    }
+    private void notAnswer(){
+        runOnUiThread(new Runnable()
+        {
+            public void run()
+            {
+                MDToast mdToast = MDToast.makeText(context, "Nie ma polączenia z serverem", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+                mdToast.setGravity(Gravity.BOTTOM,0,400);
+                mdToast.show();
+            }
+        });
     }
 }
