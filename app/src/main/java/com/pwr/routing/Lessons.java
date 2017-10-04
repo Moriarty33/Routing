@@ -151,7 +151,7 @@ public class Lessons {
             @Override
             public void run() {
                 try {
-                    URL url = new URL("http://bronn.iiar.pwr.wroc.pl/json.php?name=" + name);
+                    URL url = new URL("https://prowadzacy.eka.pwr.edu.pl/json.php?name=" + name);
                     URLConnection conn = url.openConnection();
                     conn.setConnectTimeout(3000);
                     JSONObject json = new JSONObject(IOUtils.toString(conn.getInputStream(), String.valueOf(Charset.forName("UTF-8"))));

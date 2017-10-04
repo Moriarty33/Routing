@@ -34,7 +34,7 @@ public class Teachers {
             @Override
             public void run() {
                 try {
-                    URL url = new URL("http://bronn.iiar.pwr.wroc.pl/json.php?prowadzacy");
+                    URL url = new URL("https://prowadzacy.eka.pwr.edu.pl/json.php?prowadzacy");
                     URLConnection conn = url.openConnection();
                     conn.setConnectTimeout(3000);
                     JSONObject json = new JSONObject(IOUtils.toString(conn.getInputStream(), String.valueOf(Charset.forName("UTF-8"))));

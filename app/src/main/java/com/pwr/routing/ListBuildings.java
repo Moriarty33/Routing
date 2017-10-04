@@ -26,6 +26,7 @@ public class ListBuildings {
                 listBuildings.put("B-2","145397");
                 listBuildings.put("B-3","103691");
                 listBuildings.put("B-4","385");
+                listBuildings.put("B-5","66019");
                 listBuildings.put("B-9","54164");
                 listBuildings.put("B-11","69193");
                 break;

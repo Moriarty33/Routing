@@ -15,6 +15,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 
+import com.google.firebase.crash.FirebaseCrash;
 import com.valdesekamdem.library.mdtoast.MDToast;
 
 import java.util.ArrayList;
@@ -149,23 +150,33 @@ public class DialogWindows {
         builder.setItems(items, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int item) {
                 try {
-                    String lesson[] = l.getlessonGps(listBuildingsLessons.get(les[item].getBudynek()), les[item].getNumer());
-                    if (s == 0) {
-                        Log.i("SET ZAJECIa ", lesson[0]);
-                        Log.i("SET ZAJECIa ", lesson[1]);
-                        m.setStartPoint(lesson[0], lesson[1]);
-                        m.setStarting(les[item].getBudynek() + " / " + les[item].getNumer());
-                    } else {
-                        Log.i("SET ZAJECIa ", lesson[0]);
-                        Log.i("SET ZAJECIa ", lesson[1]);
-                        m.setEndPoint(lesson[0], lesson[1]);
-                        m.setDestination(les[item].getBudynek() + " / " + les[item].getNumer());
+                    String lesson[] = l.getlessonGps(listBuildingsLessons.get(les[item].getBudynek()), les[item].getNumer().toLowerCase());
+                    if(lesson[0] == null) {
+                        lesson = l.getlessonGps(listBuildingsLessons.get(les[item].getBudynek()), les[item].getNumer());
+                    }
+
+                    if(lesson[0] != null) {
+                        if (s == 0) {
+                            Log.i("SET ZAJECIa ", lesson[0]);
+                            Log.i("SET ZAJECIa ", lesson[1]);
+                            m.setStartPoint(lesson[0], lesson[1]);
+                            m.setStarting(les[item].getBudynek() + " / " + les[item].getNumer());
+                        } else {
+                            Log.i("SET ZAJECIa ", lesson[0]);
+                            Log.i("SET ZAJECIa ", lesson[1]);
+                            m.setEndPoint(lesson[0], lesson[1]);
+                            m.setDestination(les[item].getBudynek() + " / " + les[item].getNumer());
+                        }
+                    }else  {
+                        MDToast mdToast = MDToast.makeText(context, "Nie udało się wyszukać sali :(\nale już pracuje nad tym!", MDToast.LENGTH_LONG, MDToast.TYPE_ERROR);
+                        mdToast.setGravity(Gravity.BOTTOM,0,400);
+                        mdToast.show();
+                        FirebaseCrash.report(new Exception("Sala not found: " + les[item].getBudynek() + " " + les[item].getNumer()));
                     }
 
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
 
             }
         });
