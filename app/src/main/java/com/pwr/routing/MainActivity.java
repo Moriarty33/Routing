@@ -280,8 +280,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             return;
         }
-        LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, mLocationRequest, this);
+        if(mGoogleApiClient.isConnected()){
+            LocationServices.FusedLocationApi.requestLocationUpdates(
+                    mGoogleApiClient, mLocationRequest, this);
+        }
+
     }
 
 

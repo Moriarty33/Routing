@@ -37,7 +37,7 @@ public class Teachers {
                     URL url = new URL("https://prowadzacy.eka.pwr.edu.pl/json.php?prowadzacy");
                     URLConnection conn = url.openConnection();
                     conn.setConnectTimeout(3000);
-                    JSONObject json = new JSONObject(IOUtils.toString(conn.getInputStream(), String.valueOf(Charset.forName("UTF-8"))));
+                    JSONObject json = new JSONObject(IOUtils.toString(conn.getInputStream(), "UTF-8"));
 
                     Log.i("JSON", json.toString());
                     Gson gson = new GsonBuilder().setPrettyPrinting().create();
