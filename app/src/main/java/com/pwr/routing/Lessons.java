@@ -1,6 +1,9 @@
 package com.pwr.routing;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 import android.view.Gravity;
 
@@ -23,7 +26,7 @@ import java.util.Objects;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import static com.google.android.gms.internal.zzagz.runOnUiThread;
+
 
 public class Lessons {
     Context context;
@@ -36,6 +39,7 @@ public class Lessons {
         final ArrayList<String[]> lisRooms = new ArrayList<String[]>();
 
         Thread q = new Thread(new Runnable() {
+            @TargetApi(Build.VERSION_CODES.KITKAT)
             @Override
             public void run() {
                 try {
@@ -89,6 +93,7 @@ public class Lessons {
         q.join();
         if (lisRooms.size() == 0) {
             Thread w = new Thread(new Runnable() {
+                @TargetApi(Build.VERSION_CODES.KITKAT)
                 @Override
                 public void run() {
                     try {
@@ -235,7 +240,7 @@ public class Lessons {
     }
 
     private void notAnswer(){
-        runOnUiThread(new Runnable()
+        ((Activity) context).runOnUiThread(new Runnable()
         {
             public void run()
             {

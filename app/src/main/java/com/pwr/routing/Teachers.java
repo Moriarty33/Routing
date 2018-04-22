@@ -1,6 +1,9 @@
 package com.pwr.routing;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
 import android.view.Gravity;
 import android.widget.Toast;
@@ -18,7 +21,6 @@ import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.TreeSet;
 
-import static com.google.android.gms.internal.zzagz.runOnUiThread;
 
 public class Teachers {
     Context context;
@@ -31,6 +33,7 @@ public class Teachers {
         final TreeSet<String> lisTeacher = new TreeSet<>();
 
         Thread q = new Thread(new Runnable() {
+            @TargetApi(Build.VERSION_CODES.KITKAT)
             @Override
             public void run() {
                 try {
@@ -68,7 +71,7 @@ public class Teachers {
         return lisTeacher;
     }
     private void notAnswer(){
-        runOnUiThread(new Runnable()
+        ((Activity) context).runOnUiThread(new Runnable()
         {
             public void run()
             {

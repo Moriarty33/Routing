@@ -1,8 +1,10 @@
 package com.pwr.routing;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -82,6 +84,7 @@ public class DialogWindows {
         final AlertDialog b = dialogBuilder.create();
         b.show();
         textView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @TargetApi(Build.VERSION_CODES.CUPCAKE)
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Log.i("INPUT", adapter.getItem(position).toString());

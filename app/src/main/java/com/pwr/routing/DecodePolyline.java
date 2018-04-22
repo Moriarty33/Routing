@@ -2,13 +2,23 @@ package com.pwr.routing;
 
 import android.util.Log;
 
-import com.mapzen.tangram.LngLat;
 
 import java.util.ArrayList;
 
 /**
  * Created by jamin on 26.03.2017.
  */
+
+class LngLat {
+    public Double latitude;
+    public Double longitude;
+
+    LngLat(Double longitude, Double latitude) {
+        this.longitude = longitude;
+        this.latitude = latitude;
+
+    }
+}
 
 public class DecodePolyline {
 
