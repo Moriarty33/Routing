@@ -24,9 +24,6 @@ import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -243,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         });
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+        client = mGoogleApiClient;
     }
 
 
