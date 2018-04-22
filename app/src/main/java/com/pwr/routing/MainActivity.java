@@ -16,6 +16,7 @@ import android.support.annotation.NonNull;
 import android.support.multidex.MultiDex;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.util.SortedList;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -25,6 +26,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
+import com.amazonaws.Response;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -37,11 +39,21 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.mapbox.api.directions.v5.models.DirectionsResponse;
+import com.mapbox.api.directions.v5.models.DirectionsRoute;
+import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+
+import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
+import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
+import com.mapbox.services.android.navigation.ui.v5.NavigationView;
+import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigation;
+import com.mapbox.services.android.navigation.v5.navigation.NavigationEventListener;
+import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.valdesekamdem.library.mdtoast.MDToast;
 
 import java.text.DateFormat;
@@ -50,6 +62,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import butterknife.BindView;
+import retrofit2.Call;
+import retrofit2.Callback;
 
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
@@ -86,7 +100,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private MapView mapView;
     private String MAPBOX_TOKEN = "pk.eyJ1IjoiYm9nZGFuMzMiLCJhIjoiY2pmc3J3NGRlMG5pODMzcW5hOWYxY3UwMSJ9.mwaBc5Ga8gPnJobIbd9mXw";
    // private NavigationMapRoute navigationMapRoute;
-
+    private NavigationView navigationView;
+    private NavigationMapRoute navigationMapRoute;
+    private DirectionsRoute currentRoute;
+    private MapboxMap map;
 
 
     @Override
@@ -102,14 +119,29 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         Mapbox.getInstance(this, MAPBOX_TOKEN);
         mapView = (MapView) findViewById(R.id.mapView);
+        send = (ImageView) findViewById(R.id.send);
+
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(MapboxMap mapboxMap) {
-                System.out.print("MAP LOAD");
+                map = mapboxMap;
+                send.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Log.i("START POINT ", StartPoint[0] + StartPoint[1]);
+                        Log.i("END POINT ", EndPoint[0] + EndPoint[1]);
+                getRoute(
+                        Point.fromLngLat(51.1073569,17.0644340),
+                        Point.fromLngLat( 51.1090784,17.0592878));
+                    }
+                });
             }
         });
-        MapboxNavigation navigation = new MapboxNavigation(this, MAPBOX_TOKEN);
+
+
+
+        //MapboxNavigation navigation = new MapboxNavigation(this, MAPBOX_TOKEN);
 
         // MapFragment mapFragment = (MapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
 //        mapFragment.getMapAsync(new OnMapReadyCallback() {
@@ -224,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 //        });
         starting = (AutoCompleteTextView) findViewById(R.id.start);
         destination = (AutoCompleteTextView) findViewById(R.id.destination);
-        send = (ImageView) findViewById(R.id.send);
+
         starting.setText("");
         destination.setText("");
         starting.setOnClickListener(new View.OnClickListener() {
@@ -242,6 +274,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         client = mGoogleApiClient;
+    }
+
+    private void startNavigation(NavigationLauncherOptions options) {
+
     }
 
 
@@ -560,4 +596,41 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.attachBaseContext(base);
         MultiDex.install(this);
     }
+    private void getRoute(Point origin, Point destination) {
+        NavigationRoute.builder()
+                .accessToken(Mapbox.getAccessToken())
+                .origin(origin)
+                .destination(destination)
+                .build()
+                .getRoute(new Callback<DirectionsResponse>() {
+                    @Override
+                    public void onResponse(Call<DirectionsResponse> call, retrofit2.Response<DirectionsResponse> response) {
+                        Log.d(TAG, "Response code: " + response.code());
+                        if (response.body() == null) {
+                            Log.e(TAG, "No routes found, make sure you set the right user and access token.");
+                            return;
+                        } else if (response.body().routes().size() < 1) {
+                            Log.e(TAG, "No routes found");
+                            return;
+                        }
+
+                        currentRoute = response.body().routes().get(0);
+
+                        // Draw the route on the map
+                        if (navigationMapRoute != null) {
+                            navigationMapRoute.removeRoute();
+                        } else {
+                            navigationMapRoute = new NavigationMapRoute(null, mapView, map, R.style.NavigationMapRoute);
+                        }
+                        Log.i("currentRoute", currentRoute.geometry());
+                        navigationMapRoute.addRoute(currentRoute);
+                    }
+
+                    @Override
+                    public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
+                        Log.e(TAG, "Error: " + throwable.getMessage());
+                    }
+                });
+    }
+
 }
