@@ -7,13 +7,9 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.1'
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-        classpath 'com.google.gms:google-services:3.1.1'
-        classpath 'com.google.firebase:firebase-plugins:1.1.1'
-
+        classpath 'com.android.tools.build:gradle:3.1.2'
+        classpath 'com.google.firebase:firebase-plugins:1.1.5'
+        classpath 'com.google.gms:google-services:3.2.1'
     }
 }
 
@@ -22,6 +18,7 @@ allprojects {
         jcenter()
         mavenCentral()
         google()
+        maven { url "http://oss.sonatype.org/content/repositories/snapshots/" }
     }
 }
 

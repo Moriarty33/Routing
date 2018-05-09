@@ -240,7 +240,7 @@ public class DialogWindows {
     public void switchSelected(int selected, int s) {
         listBuildings.clear();
         if (s == 0 && selected != 0) {
-            m.setlokalization(false);
+          //  m.setlokalization(false);
         }
         ListBuildings listAvaibleBildings = new ListBuildings();
         listBuildingsLessons.putAll(listAvaibleBildings.get("C"));
@@ -248,7 +248,7 @@ public class DialogWindows {
             case 0:
                 if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
                         == PackageManager.PERMISSION_GRANTED) {
-                    m.myLokalizaction();
+                    //m.myLokalizaction();
                 } else {
                     ActivityCompat.requestPermissions(m, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 255);
                 }

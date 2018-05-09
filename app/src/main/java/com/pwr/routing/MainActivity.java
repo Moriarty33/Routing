@@ -1,24 +1,14 @@
 package com.pwr.routing;
 
-import android.Manifest;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.location.Location;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.multidex.MultiDex;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.util.SortedList;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -26,63 +16,34 @@ import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
-import com.amazonaws.Response;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.mapbox.android.core.location.LocationEngine;
+import com.mapbox.android.core.location.LocationEngineListener;
+import com.mapbox.android.core.location.LocationEnginePriority;
+import com.mapbox.android.core.permissions.PermissionsListener;
+import com.mapbox.android.core.permissions.PermissionsManager;
 import com.mapbox.api.directions.v5.models.DirectionsResponse;
 import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
-import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
-
-import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
-import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
-import com.mapbox.services.android.navigation.ui.v5.NavigationView;
+import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
-import com.mapbox.services.android.navigation.v5.navigation.MapboxNavigation;
-import com.mapbox.services.android.navigation.v5.navigation.NavigationEventListener;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.valdesekamdem.library.mdtoast.MDToast;
 
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.List;
+import java.util.Objects;
 
 import butterknife.BindView;
 import retrofit2.Call;
 import retrofit2.Callback;
 
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
-    protected static final String TAG = "location-updates-sample";
-    public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 5000;
-
-    public static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
-            UPDATE_INTERVAL_IN_MILLISECONDS / 2;
-
-    protected final static String REQUESTING_LOCATION_UPDATES_KEY = "requesting-location-updates-key";
-    protected final static String LOCATION_KEY = "location-key";
-    protected final static String LAST_UPDATED_TIME_STRING_KEY = "last-updated-time-string-key";
-
-    protected Location mCurrentLocation;
-    protected Boolean mRequestingLocationUpdates = false;
-    protected String mLastUpdateTime = "";
-    LocationRequest mLocationRequest;
-    private GoogleApiClient mGoogleApiClient;
-
+public class MainActivity extends AppCompatActivity implements LocationEngineListener, PermissionsListener {
+    private static final String TAG = "APP";
     @BindView(R.id.start)
     AutoCompleteTextView starting;
     @BindView(R.id.destination)
@@ -90,56 +51,44 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @BindView(R.id.send)
     ImageView send;
     final Context context = this;
-    String[] StartPoint = new String[2];
-    String[] EndPoint = new String[2];
-    boolean myLocation = false;
+    Point StartPoint = Point.fromLngLat(51.1073569,17.0644340);
+    Point EndPoint =  Point.fromLngLat( 51.1090784,17.0592878);
     DialogWindows dlg = new DialogWindows(context, this);
     ProgressBar progressBar;
 
-    private GoogleApiClient client;
     private MapView mapView;
-    private String MAPBOX_TOKEN = "pk.eyJ1IjoiYm9nZGFuMzMiLCJhIjoiY2pmc3J3NGRlMG5pODMzcW5hOWYxY3UwMSJ9.mwaBc5Ga8gPnJobIbd9mXw";
-   // private NavigationMapRoute navigationMapRoute;
-    private NavigationView navigationView;
     private NavigationMapRoute navigationMapRoute;
     private DirectionsRoute currentRoute;
+
     private MapboxMap map;
+    private PermissionsManager permissionsManager;
+    private LocationLayerPlugin locationPlugin;
+    private LocationEngine locationEngine;
 
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        updateValuesFromBundle(savedInstanceState);
-        buildGoogleApiClient();
-
+        String MAPBOX_TOKEN = "pk.eyJ1IjoiYm9nZGFuMzMiLCJhIjoiY2pmc3J3NGRlMG5pODMzcW5hOWYxY3UwMSJ9.mwaBc5Ga8gPnJobIbd9mXw";
         Mapbox.getInstance(this, MAPBOX_TOKEN);
-        mapView = (MapView) findViewById(R.id.mapView);
-        send = (ImageView) findViewById(R.id.send);
+        mapView = findViewById(R.id.mapView);
+        send = findViewById(R.id.send);
 
         mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(MapboxMap mapboxMap) {
-                map = mapboxMap;
-                send.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Log.i("START POINT ", StartPoint[0] + StartPoint[1]);
-                        Log.i("END POINT ", EndPoint[0] + EndPoint[1]);
-                getRoute(
-                        Point.fromLngLat(51.1073569,17.0644340),
-                        Point.fromLngLat( 51.1090784,17.0592878));
-                    }
-                });
-            }
+        mapView.getMapAsync(mapboxMap -> {
+            map = mapboxMap;
+            enableLocationPlugin();
+            send.setOnClickListener(v -> {
+                Log.i("START POINT ", String.valueOf(StartPoint.longitude()));
+                Log.i("END POINT ", String.valueOf(EndPoint.longitude()));
+                getRoute(StartPoint, EndPoint);
+            });
         });
-
-
 
         //MapboxNavigation navigation = new MapboxNavigation(this, MAPBOX_TOKEN);
 
@@ -254,169 +203,141 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 //                });
 //            }
 //        });
-        starting = (AutoCompleteTextView) findViewById(R.id.start);
-        destination = (AutoCompleteTextView) findViewById(R.id.destination);
+        starting = findViewById(R.id.start);
+        destination = findViewById(R.id.destination);
 
         starting.setText("");
         destination.setText("");
-        starting.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dlg.dialogFirst(0);
-            }
-        });
-        destination.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dlg.dialogFirst(1);
-            }
-        });
+        starting.setOnClickListener(v -> dlg.dialogFirst(0));
+        destination.setOnClickListener(v -> dlg.dialogFirst(1));
 
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        client = mGoogleApiClient;
+        progressBar = findViewById(R.id.progressBar);
     }
 
-    private void startNavigation(NavigationLauncherOptions options) {
+    @SuppressWarnings( {"MissingPermission"})
+    private void enableLocationPlugin() {
+        // Check if permissions are enabled and if not request
+        if (PermissionsManager.areLocationPermissionsGranted(this)) {
+            // Create an instance of LOST location engine
+            initializeLocationEngine();
 
-    }
-
-
-    private void updateValuesFromBundle(Bundle savedInstanceState) {
-        Log.i(TAG, "Updating values from bundle");
-        if (savedInstanceState != null) {
-            if (savedInstanceState.keySet().contains(REQUESTING_LOCATION_UPDATES_KEY)) {
-                mRequestingLocationUpdates = savedInstanceState.getBoolean(
-                        REQUESTING_LOCATION_UPDATES_KEY);
-
-            }
-
-            if (savedInstanceState.keySet().contains(LOCATION_KEY)) {
-
-                mCurrentLocation = savedInstanceState.getParcelable(LOCATION_KEY);
-            }
-
-            if (savedInstanceState.keySet().contains(LAST_UPDATED_TIME_STRING_KEY)) {
-                mLastUpdateTime = savedInstanceState.getString(LAST_UPDATED_TIME_STRING_KEY);
-
-            }
-
+            locationPlugin = new LocationLayerPlugin(mapView, map, locationEngine);
+            locationPlugin.setLocationLayerEnabled(true);
+        } else {
+            permissionsManager = new PermissionsManager(this);
+            permissionsManager.requestLocationPermissions(this);
         }
     }
 
-    protected synchronized void buildGoogleApiClient() {
-        Log.i(TAG, "Building GoogleApiClient");
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-        createLocationRequest();
-    }
+    @SuppressWarnings( {"MissingPermission"})
+    private void initializeLocationEngine() {
+        locationEngine = GoogleLocationEngine.getLocationEngine(MainActivity.this);
+        locationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
+        locationEngine.activate();
 
-
-    protected void createLocationRequest() {
-        mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
-        mLocationRequest.setFastestInterval(FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-    }
-
-    protected void startLocationUpdates() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            return;
+        Location lastLocation = locationEngine.getLastLocation();
+        if (lastLocation != null) {
+            setCameraPosition(lastLocation);
+        } else {
+            locationEngine.addLocationEngineListener(this);
         }
-        if(mGoogleApiClient.isConnected()){
-            LocationServices.FusedLocationApi.requestLocationUpdates(
-                    mGoogleApiClient, mLocationRequest, this);
-        }
-
     }
 
-
-    protected void stopLocationUpdates() {
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+    private void setCameraPosition(Location location) {
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(
+                new LatLng(location.getLatitude(), location.getLongitude()), 13));
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    public void onExplanationNeeded(List<String> permissionsToExplain) {
+
+    }
+
+    @Override
+    public void onPermissionResult(boolean granted) {
+        if (granted) {
+            enableLocationPlugin();
+        } else {
+            finish();
+        }
+    }
+
+    @Override
+    @SuppressWarnings( {"MissingPermission"})
+    public void onConnected() {
+        locationEngine.requestLocationUpdates();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (location != null) {
+            setCameraPosition(location);
+            locationEngine.removeLocationEngineListener(this);
+        }
+    }
+
+    @Override
+    @SuppressWarnings( {"MissingPermission"})
     protected void onStart() {
         super.onStart();
-        client.connect();
-        mGoogleApiClient.connect();
+        if (locationEngine != null) {
+            locationEngine.requestLocationUpdates();
+        }
+        if (locationPlugin != null) {
+            locationPlugin.onStart();
+        }
+        mapView.onStart();
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        if (mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
-            startLocationUpdates();
+    protected void onStop() {
+        super.onStop();
+        if (locationEngine != null) {
+            locationEngine.removeLocationUpdates();
         }
+        if (locationPlugin != null) {
+            locationPlugin.onStop();
+        }
+        mapView.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mapView.onDestroy();
+        if (locationEngine != null) {
+            locationEngine.deactivate();
+        }
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mapView.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (mGoogleApiClient.isConnected()) {
-            stopLocationUpdates();
-        }
+        mapView.onPause();
     }
 
     @Override
-    protected void onStop() {
-        mGoogleApiClient.disconnect();
-
-        super.onStop();
-        client.disconnect();
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mapView.onSaveInstanceState(outState);
     }
-
-    @Override
-    public void onConnected(Bundle connectionHint) {
-        Log.i(TAG, "Connected to GoogleApiClient");
-        if (mCurrentLocation == null) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-            mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
-
-        }
-        if (mRequestingLocationUpdates) {
-            startLocationUpdates();
-        }
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        mCurrentLocation = location;
-        mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
-        Log.i("Update Location:", mLastUpdateTime);
-//        ValhallaLocation valhallaLocation = new ValhallaLocation();
-//        valhallaLocation.setBearing(mCurrentLocation.getBearing());
-//        valhallaLocation.setLatitude(mCurrentLocation.getLatitude());
-//        valhallaLocation.setLongitude(mCurrentLocation.getLongitude());
-//        if(myLocation && engine.getRoute() != null){
-//            engine.onLocationChanged(valhallaLocation);
-//        }
-    }
-
-    @Override
-    public void onConnectionSuspended(int cause) {
-        Log.i(TAG, "Connection suspended");
-        mGoogleApiClient.connect();
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult result) {
-        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + result.getErrorCode());
-    }
-
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putBoolean(REQUESTING_LOCATION_UPDATES_KEY, mRequestingLocationUpdates);
-        savedInstanceState.putParcelable(LOCATION_KEY, mCurrentLocation);
-        savedInstanceState.putString(LAST_UPDATED_TIME_STRING_KEY, mLastUpdateTime);
-        super.onSaveInstanceState(savedInstanceState);
-    }
-
 
     public void setStarting(String text) {
         starting.setText(text);
@@ -435,124 +356,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     public void setStartPoint(String start1, String start2) {
-        StartPoint[0] = start1;
-        StartPoint[1] = start2;
+        StartPoint = Point.fromLngLat(Double.parseDouble(start1),Double.parseDouble(start2));
     }
 
     public void setEndPoint(String end1, String end2) {
-        EndPoint[0] = end1;
-        EndPoint[1] = end2;
-    }
-
-    public void setlokalization(Boolean bool) {
-        myLocation = bool;
-    }
-
-    public void myLokalizaction() {
-        if(isLocationEnabled(context)){
-            final Timer timerLocation = new Timer();
-            timerLocation.scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            startLocationUpdates();
-                            if(mCurrentLocation != null) {
-                                    StartPoint[0] = String.valueOf(mCurrentLocation.getLatitude());
-                                    StartPoint[1] = String.valueOf(mCurrentLocation.getLongitude());
-                                    setlokalization(true);
-                                    starting.setText("Moja Lokalizacja");
-                                    timerLocation.cancel();
-                                    hideLoading();
-                            } else {
-                                showLoading();
-                                starting.setText("Wyszukuje lokalizację..");
-                            }
-                        }
-                    });
-                }
-            }, 0, 500);
-        } else {showSettingDialog();}
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode == 255 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            myLokalizaction();
-        }else {
-            MDToast mdToast = MDToast.makeText(context, "Aplikacja nie ma dostępu do lokalizacji", MDToast.LENGTH_LONG, MDToast.TYPE_ERROR);
-            mdToast.setGravity(Gravity.BOTTOM,0,400);
-            mdToast.show();
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-    }
-
-    @TargetApi(Build.VERSION_CODES.CUPCAKE)
-    public static boolean isLocationEnabled(Context context) {
-        int locationMode = 0;
-        String locationProviders;
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
-            try {
-                locationMode = Settings.Secure.getInt(context.getContentResolver(), Settings.Secure.LOCATION_MODE);
-
-            } catch (Settings.SettingNotFoundException e) {
-                e.printStackTrace();
-                return false;
-            }
-
-            return locationMode != Settings.Secure.LOCATION_MODE_OFF;
-
-        }else{
-            locationProviders = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
-            return !TextUtils.isEmpty(locationProviders);
-        }
-
-
-    }
-
-    private void showSettingDialog() {
-        LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);//Setting priotity of Location request to high
-        locationRequest.setInterval(30 * 1000);
-        locationRequest.setFastestInterval(5 * 1000);//5 sec Time interval for location update
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(locationRequest);
-        builder.setAlwaysShow(true); //this is the key ingredient to show dialog always when GPS is off
-
-        PendingResult<LocationSettingsResult> result =
-                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, builder.build());
-        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
-            @TargetApi(Build.VERSION_CODES.DONUT)
-            @Override
-            public void onResult(LocationSettingsResult result) {
-                final Status status = result.getStatus();
-                final LocationSettingsStates state = result.getLocationSettingsStates();
-                switch (status.getStatusCode()) {
-                    case LocationSettingsStatusCodes.SUCCESS:
-                        // All location settings are satisfied. The client can initialize location
-                        // requests here.
-                        break;
-                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                        // Location settings are not satisfied. But could be fixed by showing the user
-                        // a dialog.
-                        try {
-                            // Show the dialog by calling startResolutionForResult(),
-                            // and check the result in onActivityResult().
-                            status.startResolutionForResult(MainActivity.this, 225);
-                        } catch (IntentSender.SendIntentException e) {
-                            e.printStackTrace();
-                            // Ignore the error.
-                        }
-                        break;
-                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                        // Location settings are not satisfied. However, we have no way to fix the
-                        // settings so we won't show the dialog.
-                        break;
-                }
-            }
-        });
+        EndPoint = Point.fromLngLat(Double.parseDouble(end1),Double.parseDouble(end2));
     }
 
     @Override
@@ -565,7 +373,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                         mdToast = MDToast.makeText(context, "Lokalizacja jest włączona", MDToast.LENGTH_SHORT, MDToast.TYPE_SUCCESS);
                         mdToast.setGravity(Gravity.BOTTOM,0,400);
                         mdToast.show();
-                        myLokalizaction();
                         break;
                     case RESULT_CANCELED:
                         mdToast = MDToast.makeText(context, "Nie ma dostępu do lokalizacji", MDToast.LENGTH_LONG, MDToast.TYPE_ERROR);
@@ -596,6 +403,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.attachBaseContext(base);
         MultiDex.install(this);
     }
+
     private void getRoute(Point origin, Point destination) {
         NavigationRoute.builder()
                 .accessToken(Mapbox.getAccessToken())
@@ -609,12 +417,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                         if (response.body() == null) {
                             Log.e(TAG, "No routes found, make sure you set the right user and access token.");
                             return;
-                        } else if (response.body().routes().size() < 1) {
-                            Log.e(TAG, "No routes found");
-                            return;
+                        } else {
+                            if (Objects.requireNonNull(response.body()).routes().size() < 1) {
+                                Log.e(TAG, "No routes found");
+                                return;
+                            }
                         }
 
-                        currentRoute = response.body().routes().get(0);
+                        currentRoute = Objects.requireNonNull(response.body()).routes().get(0);
 
                         // Draw the route on the map
                         if (navigationMapRoute != null) {
@@ -622,7 +432,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                         } else {
                             navigationMapRoute = new NavigationMapRoute(null, mapView, map, R.style.NavigationMapRoute);
                         }
-                        Log.i("currentRoute", currentRoute.geometry());
                         navigationMapRoute.addRoute(currentRoute);
                     }
 
