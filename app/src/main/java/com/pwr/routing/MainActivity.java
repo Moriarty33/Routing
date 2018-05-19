@@ -39,6 +39,7 @@ import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
 import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
+import com.mapbox.services.android.navigation.v5.navigation.NavigationUnitType;
 import com.valdesekamdem.library.mdtoast.MDToast;
 
 import java.util.List;
@@ -103,18 +104,17 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         starting = findViewById(R.id.start);
         destination = findViewById(R.id.destination);
         navigationButton = findViewById(R.id.startButton);
-        navigationButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                NavigationLauncherOptions options = NavigationLauncherOptions.builder()
-                        .origin(StartPoint)
-                        .destination(EndPoint)
-                        .shouldSimulateRoute(true)
-                        .directionsProfile(DirectionsCriteria.PROFILE_WALKING)
-                        .build();
+        navigationButton.setOnClickListener(v -> {
+            NavigationLauncherOptions options = NavigationLauncherOptions.builder()
+                    .origin(StartPoint)
+                    .destination(EndPoint)
+                    .shouldSimulateRoute(true)
+                    .directionsProfile(DirectionsCriteria.PROFILE_WALKING)
+                    .unitType(NavigationUnitType.TYPE_METRIC)
+                    .build();
 
-                // Call this method with Context from within an Activity
-                NavigationLauncher.startNavigation(MainActivity.this, options);
-            }
+            // Call this method with Context from within an Activity
+            NavigationLauncher.startNavigation(MainActivity.this, options);
         });
 
 
@@ -252,8 +252,15 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         mapView.onSaveInstanceState(outState);
     }
 
+    @SuppressWarnings({"MissingPermission"})
     public void enableLocation() {
-        this.enableLocationPlugin();
+        if (locationPlugin != null) {
+            locationPlugin.setLocationLayerEnabled(true);
+            locationEngine.requestLocationUpdates();
+        } else {
+            this.enableLocationPlugin();
+        }
+
     }
 
     @SuppressWarnings({"MissingPermission"})
