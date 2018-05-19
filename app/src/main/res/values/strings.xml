@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">PWr Nawigacja</string>
     <string name="title_activity_main">PWr Nawigacja</string>
+    <string name="access_token" translatable="false">pk.eyJ1IjoiYm9nZGFuMzMiLCJhIjoiY2pmc3J3NGRlMG5pODMzcW5hOWYxY3UwMSJ9.mwaBc5Ga8gPnJobIbd9mXw</string>
 </resources>

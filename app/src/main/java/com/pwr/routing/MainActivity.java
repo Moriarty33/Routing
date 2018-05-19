@@ -21,10 +21,14 @@ import com.mapbox.android.core.location.LocationEngineListener;
 import com.mapbox.android.core.location.LocationEnginePriority;
 import com.mapbox.android.core.permissions.PermissionsListener;
 import com.mapbox.android.core.permissions.PermissionsManager;
+import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.models.DirectionsResponse;
 import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.annotations.Marker;
+import com.mapbox.mapboxsdk.annotations.MarkerOptions;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -51,8 +55,8 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     @BindView(R.id.send)
     ImageView send;
     final Context context = this;
-    Point StartPoint = Point.fromLngLat(51.1073569,17.0644340);
-    Point EndPoint =  Point.fromLngLat( 51.1090784,17.0592878);
+    Point StartPoint = Point.fromLngLat(17.057688277787634, 51.10949237944624);
+    Point EndPoint = Point.fromLngLat(17.058318177817682, 51.10712000847647);
     DialogWindows dlg = new DialogWindows(context, this);
     ProgressBar progressBar;
 
@@ -65,6 +69,8 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     private LocationLayerPlugin locationPlugin;
     private LocationEngine locationEngine;
 
+    private Marker endPointMarker;
+
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -74,135 +80,22 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         setSupportActionBar(toolbar);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        String MAPBOX_TOKEN = "pk.eyJ1IjoiYm9nZGFuMzMiLCJhIjoiY2pmc3J3NGRlMG5pODMzcW5hOWYxY3UwMSJ9.mwaBc5Ga8gPnJobIbd9mXw";
-        Mapbox.getInstance(this, MAPBOX_TOKEN);
+        Mapbox.getInstance(this, getResources().getString(R.string.access_token));
         mapView = findViewById(R.id.mapView);
         send = findViewById(R.id.send);
 
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(mapboxMap -> {
             map = mapboxMap;
-            enableLocationPlugin();
             send.setOnClickListener(v -> {
-                Log.i("START POINT ", String.valueOf(StartPoint.longitude()));
-                Log.i("END POINT ", String.valueOf(EndPoint.longitude()));
-                getRoute(StartPoint, EndPoint);
+                if (StartPoint != null && EndPoint != null) {
+                    getRoute(StartPoint, EndPoint);
+                } else {
+                    message("Wybierz punkt startowy i docelowy", MDToast.LENGTH_SHORT, MDToast.TYPE_INFO);
+                }
             });
         });
 
-        //MapboxNavigation navigation = new MapboxNavigation(this, MAPBOX_TOKEN);
-
-        // MapFragment mapFragment = (MapFragment) getSupportFragmentManager().findFragmentById(R.id.map_fragment);
-//        mapFragment.getMapAsync(new OnMapReadyCallback() {
-//            @Override
-//            public void onMapReady(final MapzenMap map) {
-//                map.setPosition(new LngLat(17.059278, 51.108942));
-//                map.setZoom(18f);
-//
-//                send.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        if (StartPoint[0] != null && EndPoint[0] != null) {
-//                            map.setZoom(18f);
-//                            map.setRotation(0f);
-//                            map.setTilt(0f);
-//                            showLoading();
-//                            Log.i("mLastUpdateTime: ", mLastUpdateTime);
-//                            startLocationUpdates();
-//                            final MapzenRouter router = new MapzenRouter(MainActivity.this);
-//                            router.setWalking();
-//                            router.setCallback(new RouteCallback() {
-//                                @Override
-//                                public void success(final Route route) {
-//                                    hideLoading();
-//
-//                                    RouteListener routeListener = new RouteListener() {
-//                                        @Override
-//                                        public void onRouteStart() {
-//                                            map.clearRouteLocationMarker();
-//                                            map.clearRouteLine();
-//                                            map.clearDroppedPins();
-//
-//                                            List<LngLat> coordinates = new ArrayList<>();
-//                                            for (ValhallaLocation location : route.getGeometry()) {
-//                                                coordinates.add(new LngLat(location.getLongitude(), location.getLatitude()));
-//                                            }
-//                                            map.drawRouteLine(coordinates);
-//                                            map.setPosition(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
-//                                            map.drawRouteLocationMarker(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
-//                                            map.drawDroppedPin(new LngLat(Double.parseDouble(EndPoint[1]), Double.parseDouble(EndPoint[0])));
-//
-//                                        }
-//
-//                                        @Override
-//                                        public void onRecalculate(ValhallaLocation location) {
-//                                            router.clearLocations();
-//                                            StartPoint[0] = String.valueOf(location.getLatitude());
-//                                            StartPoint[1] = String.valueOf(location.getLongitude());
-//                                            double[] start = {Double.parseDouble(StartPoint[0]), Double.parseDouble(StartPoint[1])};
-//                                            router.setLocation(start);
-//                                            double[] end = {Double.parseDouble(EndPoint[0]), Double.parseDouble(EndPoint[1])};
-//                                            router.setLocation(end);
-//                                            Log.i("RECALCULATE", "Recalculate");
-//                                            router.fetch();
-//                                        }
-//
-//                                        @Override
-//                                        public void onSnapLocation(ValhallaLocation originalLocation,
-//                                                                   ValhallaLocation snapLocation) {
-//                                            StartPoint[0] = String.valueOf(snapLocation.getLatitude());
-//                                            StartPoint[1] = String.valueOf(snapLocation.getLongitude());
-//                                            map.clearRouteLocationMarker();
-//                                            map.drawRouteLocationMarker(new LngLat(Double.parseDouble(StartPoint[1]), Double.parseDouble(StartPoint[0])));
-//                                            Log.i("RECALCULATE", "Recalculate1");
-//                                        }
-//
-//                                        @Override
-//                                        public void onMilestoneReached(int index, RouteEngine.Milestone milestone) {}
-//
-//                                        @Override
-//                                        public void onApproachInstruction(int index) {}
-//
-//                                        @Override
-//                                        public void onInstructionComplete(int index) {}
-//
-//                                        @Override
-//                                        public void onUpdateDistance(int distanceToNextInstruction, int distanceToDestination) {}
-//
-//                                        @Override
-//                                        public void onRouteComplete() {}
-//                                    };
-//                                    engine.setListener(routeListener);
-//                                    engine.setRoute(route);
-//                                }
-//
-//                                @Override
-//                                public void failure(int i) {
-//                                    hideLoading();
-//                                    MDToast mdToast = MDToast.makeText(context, "Nie udało się wyliczyć drogi.", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
-//                                    mdToast.setGravity(Gravity.BOTTOM,0,400);
-//                                    mdToast.show();
-//                                    Log.e("Eror", i + "");
-//                                }
-//                            });
-//
-//                            double[] start = {Double.parseDouble(StartPoint[0]), Double.parseDouble(StartPoint[1])};
-//                            router.setLocation(start);
-//                            double[] end = {Double.parseDouble(EndPoint[0]), Double.parseDouble(EndPoint[1])};
-//                            router.setLocation(end);
-//
-//                            Log.i("START POINT ", StartPoint[0] + StartPoint[1]);
-//                            Log.i("END POINT ", EndPoint[0] + EndPoint[1]);
-//                            router.fetch();
-//                        }else{
-//                            MDToast mdToast = MDToast.makeText(context, "Wybierz punkt startowy i docelowy", MDToast.LENGTH_SHORT, MDToast.TYPE_INFO);
-//                            mdToast.setGravity(Gravity.BOTTOM,0,400);
-//                            mdToast.show();
-//                        }
-//                    }
-//                });
-//            }
-//        });
         starting = findViewById(R.id.start);
         destination = findViewById(R.id.destination);
 
@@ -214,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         progressBar = findViewById(R.id.progressBar);
     }
 
-    @SuppressWarnings( {"MissingPermission"})
+    @SuppressWarnings({"MissingPermission"})
     private void enableLocationPlugin() {
         // Check if permissions are enabled and if not request
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
@@ -229,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         }
     }
 
-    @SuppressWarnings( {"MissingPermission"})
+    @SuppressWarnings({"MissingPermission"})
     private void initializeLocationEngine() {
         locationEngine = GoogleLocationEngine.getLocationEngine(MainActivity.this);
         locationEngine.setPriority(LocationEnginePriority.HIGH_ACCURACY);
@@ -245,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
 
     private void setCameraPosition(Location location) {
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                new LatLng(location.getLatitude(), location.getLongitude()), 13));
+                new LatLng(location.getLatitude(), location.getLongitude()), 16));
     }
 
     @Override
@@ -268,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     }
 
     @Override
-    @SuppressWarnings( {"MissingPermission"})
+    @SuppressWarnings({"MissingPermission"})
     public void onConnected() {
         locationEngine.requestLocationUpdates();
     }
@@ -282,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     }
 
     @Override
-    @SuppressWarnings( {"MissingPermission"})
+    @SuppressWarnings({"MissingPermission"})
     protected void onStart() {
         super.onStart();
         if (locationEngine != null) {
@@ -339,6 +232,17 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         mapView.onSaveInstanceState(outState);
     }
 
+    public void enableLocation() {
+        this.enableLocationPlugin();
+    }
+
+    @SuppressWarnings({"MissingPermission"})
+    public void disableLocation() {
+        locationPlugin.setLocationLayerEnabled(false);
+        locationEngine.removeLocationUpdates();
+    }
+
+
     public void setStarting(String text) {
         starting.setText(text);
     }
@@ -356,32 +260,11 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     }
 
     public void setStartPoint(String start1, String start2) {
-        StartPoint = Point.fromLngLat(Double.parseDouble(start1),Double.parseDouble(start2));
+        StartPoint = Point.fromLngLat(Double.parseDouble(start2), Double.parseDouble(start1));
     }
 
     public void setEndPoint(String end1, String end2) {
-        EndPoint = Point.fromLngLat(Double.parseDouble(end1),Double.parseDouble(end2));
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        MDToast mdToast;
-        switch (requestCode) {
-            case 225:
-                switch (resultCode) {
-                    case RESULT_OK:
-                        mdToast = MDToast.makeText(context, "Lokalizacja jest włączona", MDToast.LENGTH_SHORT, MDToast.TYPE_SUCCESS);
-                        mdToast.setGravity(Gravity.BOTTOM,0,400);
-                        mdToast.show();
-                        break;
-                    case RESULT_CANCELED:
-                        mdToast = MDToast.makeText(context, "Nie ma dostępu do lokalizacji", MDToast.LENGTH_LONG, MDToast.TYPE_ERROR);
-                        mdToast.setGravity(Gravity.BOTTOM,0,400);
-                        mdToast.show();
-                        break;
-                }
-                break;
-        }
+        EndPoint = Point.fromLngLat(Double.parseDouble(end2), Double.parseDouble(end1));
     }
 
     public void showLoading() {
@@ -391,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         destination.setEnabled(false);
     }
 
-    public void hideLoading(){
+    public void hideLoading() {
         progressBar.setVisibility(View.INVISIBLE);
         send.setEnabled(true);
         starting.setEnabled(true);
@@ -409,6 +292,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
                 .accessToken(Mapbox.getAccessToken())
                 .origin(origin)
                 .destination(destination)
+                .profile(DirectionsCriteria.PROFILE_WALKING)
                 .build()
                 .getRoute(new Callback<DirectionsResponse>() {
                     @Override
@@ -416,15 +300,16 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
                         Log.d(TAG, "Response code: " + response.code());
                         if (response.body() == null) {
                             Log.e(TAG, "No routes found, make sure you set the right user and access token.");
+                            message("Nie udało się wyliczyć drogi.", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                             return;
                         } else {
                             if (Objects.requireNonNull(response.body()).routes().size() < 1) {
-                                Log.e(TAG, "No routes found");
+                                message("Nie udało się wyliczyć drogi.", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                                 return;
                             }
                         }
 
-                        currentRoute = Objects.requireNonNull(response.body()).routes().get(0);
+                                currentRoute = Objects.requireNonNull(response.body()).routes().get(0);
 
                         // Draw the route on the map
                         if (navigationMapRoute != null) {
@@ -433,13 +318,33 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
                             navigationMapRoute = new NavigationMapRoute(null, mapView, map, R.style.NavigationMapRoute);
                         }
                         navigationMapRoute.addRoute(currentRoute);
+                        setCameraPosition(createNewLocation(origin));
+                        if (endPointMarker != null) {
+                            map.removeMarker(endPointMarker);
+                        }
+                        endPointMarker = map.addMarker(new MarkerOptions().position(new LatLng(destination.latitude(), destination.longitude())));
                     }
 
                     @Override
                     public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
                         Log.e(TAG, "Error: " + throwable.getMessage());
+                        message("Błąd polączenia z serwerem", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                     }
                 });
+    }
+
+    public void message(String message, int duration, int type) {
+        MDToast mdToast;
+        mdToast = MDToast.makeText(context, message, duration, type);
+        mdToast.setGravity(Gravity.BOTTOM, 0, 400);
+        mdToast.show();
+    }
+
+    Location createNewLocation(Point point) {
+        Location location = new Location("dummyprovider");
+        location.setLongitude(point.longitude());
+        location.setLatitude(point.latitude());
+        return location;
     }
 
 }
