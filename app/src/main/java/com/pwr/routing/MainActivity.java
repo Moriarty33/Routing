@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
@@ -34,6 +35,8 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin;
+import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
+import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.valdesekamdem.library.mdtoast.MDToast;
@@ -70,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     private LocationEngine locationEngine;
 
     private Marker endPointMarker;
+    private Button navigationButton;
 
 
     @Override
@@ -98,11 +102,27 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
 
         starting = findViewById(R.id.start);
         destination = findViewById(R.id.destination);
+        navigationButton = findViewById(R.id.startButton);
+        navigationButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                NavigationLauncherOptions options = NavigationLauncherOptions.builder()
+                        .origin(StartPoint)
+                        .destination(EndPoint)
+                        .shouldSimulateRoute(true)
+                        .directionsProfile(DirectionsCriteria.PROFILE_WALKING)
+                        .build();
+
+                // Call this method with Context from within an Activity
+                NavigationLauncher.startNavigation(MainActivity.this, options);
+            }
+        });
+
 
         starting.setText("");
         destination.setText("");
         starting.setOnClickListener(v -> dlg.dialogFirst(0));
         destination.setOnClickListener(v -> dlg.dialogFirst(1));
+
 
         progressBar = findViewById(R.id.progressBar);
     }
@@ -238,8 +258,10 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
 
     @SuppressWarnings({"MissingPermission"})
     public void disableLocation() {
-        locationPlugin.setLocationLayerEnabled(false);
-        locationEngine.removeLocationUpdates();
+        if (locationPlugin != null) {
+            locationPlugin.setLocationLayerEnabled(false);
+            locationEngine.removeLocationUpdates();
+        }
     }
 
 
@@ -323,6 +345,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
                             map.removeMarker(endPointMarker);
                         }
                         endPointMarker = map.addMarker(new MarkerOptions().position(new LatLng(destination.latitude(), destination.longitude())));
+                        navigationButton.setEnabled(true);
                     }
 
                     @Override
