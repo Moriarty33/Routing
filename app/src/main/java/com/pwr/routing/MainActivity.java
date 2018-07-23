@@ -1,7 +1,6 @@
 package com.pwr.routing;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.location.Location;
 import android.os.Bundle;
@@ -9,7 +8,6 @@ import android.support.annotation.NonNull;
 import android.support.multidex.MultiDex;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
@@ -29,17 +27,16 @@ import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
-import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.plugins.locationlayer.LocationLayerPlugin;
+import com.mapbox.mapboxsdk.plugins.locationlayer.modes.RenderMode;
 import com.mapbox.services.android.navigation.ui.v5.NavigationLauncher;
 import com.mapbox.services.android.navigation.ui.v5.NavigationLauncherOptions;
 import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
-import com.mapbox.services.android.navigation.v5.navigation.NavigationUnitType;
 import com.valdesekamdem.library.mdtoast.MDToast;
 
 import java.util.List;
@@ -48,6 +45,7 @@ import java.util.Objects;
 import butterknife.BindView;
 import retrofit2.Call;
 import retrofit2.Callback;
+import timber.log.Timber;
 
 
 public class MainActivity extends AppCompatActivity implements LocationEngineListener, PermissionsListener {
@@ -58,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     AutoCompleteTextView destination;
     @BindView(R.id.send)
     ImageView send;
-    final Context context = this;
+    final MainActivity context = this;
     Point StartPoint = Point.fromLngLat(17.057688277787634, 51.10949237944624);
     Point EndPoint = Point.fromLngLat(17.058318177817682, 51.10712000847647);
     DialogWindows dlg = new DialogWindows(context, this);
@@ -92,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(mapboxMap -> {
             map = mapboxMap;
+            setCameraPosition(createNewLocation(Point.fromLngLat(17.057688277787634, 51.10949237944624)));
             send.setOnClickListener(v -> {
                 if (StartPoint != null && EndPoint != null) {
                     getRoute(StartPoint, EndPoint);
@@ -106,11 +105,9 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         navigationButton = findViewById(R.id.startButton);
         navigationButton.setOnClickListener(v -> {
             NavigationLauncherOptions options = NavigationLauncherOptions.builder()
-                    .origin(StartPoint)
-                    .destination(EndPoint)
+                    .directionsRoute(currentRoute)
                     .shouldSimulateRoute(true)
                     .directionsProfile(DirectionsCriteria.PROFILE_WALKING)
-                    .unitType(NavigationUnitType.TYPE_METRIC)
                     .build();
 
             // Call this method with Context from within an Activity
@@ -136,6 +133,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
 
             locationPlugin = new LocationLayerPlugin(mapView, map, locationEngine);
             locationPlugin.setLocationLayerEnabled(true);
+            locationPlugin.setRenderMode(RenderMode.COMPASS);
         } else {
             permissionsManager = new PermissionsManager(this);
             permissionsManager.requestLocationPermissions(this);
@@ -317,8 +315,8 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     }
 
     private void getRoute(Point origin, Point destination) {
-        NavigationRoute.builder()
-                .accessToken(Mapbox.getAccessToken())
+        NavigationRoute.builder(context)
+                .accessToken(getResources().getString(R.string.access_token))
                 .origin(origin)
                 .destination(destination)
                 .profile(DirectionsCriteria.PROFILE_WALKING)
@@ -326,9 +324,9 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
                 .getRoute(new Callback<DirectionsResponse>() {
                     @Override
                     public void onResponse(Call<DirectionsResponse> call, retrofit2.Response<DirectionsResponse> response) {
-                        Log.d(TAG, "Response code: " + response.code());
+                        Timber.tag(TAG).d("Response code: %s", response.code());
                         if (response.body() == null) {
-                            Log.e(TAG, "No routes found, make sure you set the right user and access token.");
+                            Timber.tag(TAG).e("No routes found, make sure you set the right user and access token.");
                             message("Nie udało się wyliczyć drogi.", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                             return;
                         } else {
@@ -338,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
                             }
                         }
 
-                                currentRoute = Objects.requireNonNull(response.body()).routes().get(0);
+                        currentRoute = Objects.requireNonNull(response.body()).routes().get(0);
 
                         // Draw the route on the map
                         if (navigationMapRoute != null) {
@@ -357,7 +355,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
 
                     @Override
                     public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
-                        Log.e(TAG, "Error: " + throwable.getMessage());
+                        Timber.tag(TAG).e("Error: %s", throwable.getMessage());
                         message("Błąd polączenia z serwerem", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                     }
                 });

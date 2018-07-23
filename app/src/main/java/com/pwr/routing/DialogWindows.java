@@ -33,7 +33,7 @@ public class DialogWindows {
     private Map<String, String> listBuildings = new HashMap<>();
     private Map<String, String> listBuildingsLessons = new HashMap<>();
 
-    public DialogWindows(Context ctx, MainActivity M) {
+    public DialogWindows(MainActivity ctx, MainActivity M) {
         context = ctx;
         m = M;
         l = new Lessons(ctx);
@@ -241,12 +241,14 @@ public class DialogWindows {
         listBuildings.clear();
         if (s == 0 && selected != 0) {
           m.disableLocation();
+          m.setStarting(null);
         }
         ListBuildings listAvaibleBildings = new ListBuildings();
         listBuildingsLessons.putAll(listAvaibleBildings.get("C"));
         switch (selected) {
             case 0:
                 m.enableLocation();
+                m.setStarting("Moja lokalizacja");
                 break;
             case 1:
                 dialogListTeachers(s);
