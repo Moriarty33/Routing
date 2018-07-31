@@ -47,6 +47,10 @@ dependencies {
         transitive = true
     }
     implementation 'com.mapbox.mapboxsdk:mapbox-android-plugin-locationlayer:0.7.0'
+
+    implementation 'com.android.support:support-compat:27.1.1'
+    implementation 'com.daimajia.easing:library:2.0@aar'
+    implementation 'com.daimajia.androidanimations:library:2.3@aar'
 }
 
 

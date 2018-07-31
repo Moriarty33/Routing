@@ -5,8 +5,10 @@ import android.content.pm.ActivityInfo;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.multidex.MultiDex;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.View;
@@ -15,6 +17,8 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
+import com.daimajia.androidanimations.library.Techniques;
+import com.daimajia.androidanimations.library.YoYo;
 import com.mapbox.android.core.location.LocationEngine;
 import com.mapbox.android.core.location.LocationEngineListener;
 import com.mapbox.android.core.location.LocationEnginePriority;
@@ -56,6 +60,12 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     AutoCompleteTextView destination;
     @BindView(R.id.send)
     ImageView send;
+    @BindView(R.id.cardview)
+    CardView cardview;
+    @BindView(R.id.startButton)
+    FloatingActionButton navigationButton;
+    @BindView(R.id.backButton)
+    FloatingActionButton backButton;
     final MainActivity context = this;
     Point StartPoint = Point.fromLngLat(17.057688277787634, 51.10949237944624);
     Point EndPoint = Point.fromLngLat(17.058318177817682, 51.10712000847647);
@@ -72,8 +82,11 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     private LocationEngine locationEngine;
 
     private Marker endPointMarker;
-    private Button navigationButton;
 
+    public enum ViewState {
+        SELECT,
+        NAVIGATION
+    }
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -94,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
             send.setOnClickListener(v -> {
                 if (StartPoint != null && EndPoint != null) {
                     getRoute(StartPoint, EndPoint);
+                    setViewVisibleState(ViewState.NAVIGATION);
                 } else {
                     message("Wybierz punkt startowy i docelowy", MDToast.LENGTH_SHORT, MDToast.TYPE_INFO);
                 }
@@ -122,6 +136,37 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
 
 
         progressBar = findViewById(R.id.progressBar);
+
+        backButton = findViewById(R.id.backButton);
+        backButton.setOnClickListener(v -> setViewVisibleState(ViewState.SELECT));
+    }
+
+    private void setViewVisibleState(ViewState viewState) {
+        if (viewState == ViewState.NAVIGATION) {
+            hideViewElement(R.id.cardview);
+            showViewElement(R.id.startButton);
+            showViewElement(R.id.backButton);
+        }
+
+        if (viewState ==  ViewState.SELECT) {
+            hideViewElement(R.id.startButton);
+            hideViewElement(R.id.backButton);
+            showViewElement(R.id.cardview);
+        }
+
+    }
+
+    private void showViewElement(Integer target){
+        YoYo.with(Techniques.SlideInUp)
+                .duration(800)
+                .playOn(findViewById(target));
+        findViewById(target).setVisibility(View.VISIBLE);
+    }
+
+    private void hideViewElement(Integer target){
+        YoYo.with(Techniques.SlideOutDown)
+                .duration(800)
+                .playOn(findViewById(target));
     }
 
     @SuppressWarnings({"MissingPermission"})

@@ -11,16 +11,27 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.pwr.routing.MainActivity"
     tools:showIn="@layout/activity_main">
-    <Button
+
+    <android.support.design.widget.FloatingActionButton
         android:id="@+id/startButton"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_width="fill_parent"
-        android:padding="5px"
-        android:layout_margin="20px"
-        android:text="Start navigation"
+        android:layout_alignBottom="@+id/cardview"
+        android:layout_alignEnd="@+id/cardview"
         android:background="@color/colorPrimary"
-        android:textColor="@color/primary_light"
-        android:enabled="false"/>
+        android:src="@drawable/ic_send_white_24dp"
+        android:visibility="invisible"
+        />
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/backButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/cardview"
+        android:layout_alignStart="@+id/cardview"
+        android:background="@color/colorPrimary"
+        android:src="@drawable/ic_arrow_back_white_24dp"
+        android:visibility="invisible"
+        />
 
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapView"
