@@ -104,7 +104,10 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         @SuppressLint("MissingPermission")
         @Override
         public void onConnected() {
-            setStartPoint(String.valueOf(locationEngine.getLastLocation().getLatitude()), String.valueOf(locationEngine.getLastLocation().getLongitude()));
+            locationEngine.requestLocationUpdates();
+            if (locationEngine.getLastLocation() != null) {
+                setStartPoint(String.valueOf(locationEngine.getLastLocation().getLatitude()), String.valueOf(locationEngine.getLastLocation().getLongitude()));
+            }
         }
 
         @Override
@@ -333,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
             locationPlugin.setLocationLayerEnabled(true);
             locationEngine.requestLocationUpdates();
         } else {
-            this.enableLocationPlugin();
+            enableLocationPlugin();
         }
 
         if (locationEngine != null) {
