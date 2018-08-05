@@ -1,5 +1,6 @@
 package com.pwr.routing;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.location.Location;
@@ -43,8 +44,17 @@ import com.mapbox.services.android.navigation.ui.v5.route.NavigationMapRoute;
 import com.mapbox.services.android.navigation.v5.navigation.NavigationRoute;
 import com.valdesekamdem.library.mdtoast.MDToast;
 
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Objects;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import butterknife.BindView;
 import retrofit2.Call;
@@ -67,8 +77,10 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     @BindView(R.id.backButton)
     FloatingActionButton backButton;
     final MainActivity context = this;
-    Point StartPoint = Point.fromLngLat(17.057688277787634, 51.10949237944624);
-    Point EndPoint = Point.fromLngLat(17.058318177817682, 51.10712000847647);
+//    Point StartPoint = Point.fromLngLat(17.057688277787634, 51.10949237944624);
+//    Point EndPoint = Point.fromLngLat(17.058318177817682, 51.10712000847647);
+    Point StartPoint;
+    Point EndPoint;
     DialogWindows dlg = new DialogWindows(context, this);
     ProgressBar progressBar;
 
@@ -87,6 +99,19 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         SELECT,
         NAVIGATION
     }
+
+    private LocationEngineListener updateStartPointWithLocationEnabledListener = new LocationEngineListener() {
+        @SuppressLint("MissingPermission")
+        @Override
+        public void onConnected() {
+            setStartPoint(String.valueOf(locationEngine.getLastLocation().getLatitude()), String.valueOf(locationEngine.getLastLocation().getLongitude()));
+        }
+
+        @Override
+        public void onLocationChanged(Location location) {
+            setStartPoint(String.valueOf(location.getLatitude()), String.valueOf(location.getLongitude()));
+        }
+    };
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -109,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
                     getRoute(StartPoint, EndPoint);
                     setViewVisibleState(ViewState.NAVIGATION);
                 } else {
-                    message("Wybierz punkt startowy i docelowy", MDToast.LENGTH_SHORT, MDToast.TYPE_INFO);
+                    message(getString(R.string.NOT_SET_ANY_POINT), MDToast.LENGTH_SHORT, MDToast.TYPE_INFO);
                 }
             });
         });
@@ -118,9 +143,10 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         destination = findViewById(R.id.destination);
         navigationButton = findViewById(R.id.startButton);
         navigationButton.setOnClickListener(v -> {
+            Boolean shouldSimulateRoute = locationPlugin == null || !locationPlugin.isLocationLayerEnabled();
             NavigationLauncherOptions options = NavigationLauncherOptions.builder()
                     .directionsRoute(currentRoute)
-                    .shouldSimulateRoute(true)
+                    .shouldSimulateRoute(shouldSimulateRoute)
                     .directionsProfile(DirectionsCriteria.PROFILE_WALKING)
                     .build();
 
@@ -139,6 +165,12 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
 
         backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> setViewVisibleState(ViewState.SELECT));
+
+        try {
+            addCerts();
+        } catch (KeyManagementException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
     }
 
     private void setViewVisibleState(ViewState viewState) {
@@ -304,6 +336,10 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
             this.enableLocationPlugin();
         }
 
+        if (locationEngine != null) {
+            locationEngine.addLocationEngineListener(updateStartPointWithLocationEnabledListener);
+        }
+
     }
 
     @SuppressWarnings({"MissingPermission"})
@@ -311,6 +347,10 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         if (locationPlugin != null) {
             locationPlugin.setLocationLayerEnabled(false);
             locationEngine.removeLocationUpdates();
+        }
+
+        if (locationEngine != null) {
+            locationEngine.removeLocationEngineListener(updateStartPointWithLocationEnabledListener);
         }
     }
 
@@ -332,11 +372,15 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
     }
 
     public void setStartPoint(String start1, String start2) {
-        StartPoint = Point.fromLngLat(Double.parseDouble(start2), Double.parseDouble(start1));
+        if (start1 != null && start2 != null) {
+            StartPoint = Point.fromLngLat(Double.parseDouble(start2), Double.parseDouble(start1));
+        }
     }
 
     public void setEndPoint(String end1, String end2) {
-        EndPoint = Point.fromLngLat(Double.parseDouble(end2), Double.parseDouble(end1));
+        if (end1 != null && end2 != null) {
+            EndPoint = Point.fromLngLat(Double.parseDouble(end2), Double.parseDouble(end1));
+        }
     }
 
     public void showLoading() {
@@ -418,6 +462,33 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
         location.setLongitude(point.longitude());
         location.setLatitude(point.latitude());
         return location;
+    }
+
+    private void addCerts() throws KeyManagementException, NoSuchAlgorithmException {
+        TrustManager[] trustAllCerts = new TrustManager[] {
+                new X509TrustManager() {
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    @SuppressLint("TrustAllX509TrustManager")
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {  }
+
+                    @SuppressLint("TrustAllX509TrustManager")
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {  }
+
+                }
+        };
+
+        SSLContext sc = SSLContext.getInstance("SSL");
+        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+        // Create all-trusting host name verifier
+        HostnameVerifier allHostsValid = (hostname, session) -> true;
+        // Install the all-trusting host verifier
+        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+
     }
 
 }

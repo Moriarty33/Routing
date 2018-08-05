@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
+import timber.log.Timber;
+
 public class DialogWindows {
     private MainActivity m;
     private Teachers t;
@@ -199,37 +201,31 @@ public class DialogWindows {
         final AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Wybierz sale");
 
-        builder.setItems(items, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int item) {
-                String Start = ListRooms.get(item)[1];
-                String End = ListRooms.get(item)[2];
-                Log.i("SET:  ", Start);
-                Log.i("SET:  ", End);
-                if (s == 0) {
-                    m.setStartPoint(Start, End);
-                    m.setStarting(m.getStarting() + " / " + ListRooms.get(item)[0]);
-                } else {
-                    m.setEndPoint(Start, End);
-                    m.setDestination(m.getDestination() + " / " + ListRooms.get(item)[0]);
-                }
-
-            }
-        }).setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                if(s == 0){
-                    m.setStarting(null);
-                    m.setStartPoint(null,null);
-                }
-                if(s == 1){
-                    m.setDestination(null);
-                    m.setEndPoint(null,null);
-                }
-                MDToast mdToast = MDToast.makeText(context, "Żadna sala nie została wybrana", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
-                mdToast.setGravity(Gravity.BOTTOM,0,400);
-                mdToast.show();
+        builder.setItems(items, (dialog, item) -> {
+            String Start = ListRooms.get(item)[1];
+            String End = ListRooms.get(item)[2];
+            Timber.tag("SET:  ").i(Start);
+            Timber.tag("SET:  ").i(End);
+            if (s == 0) {
+                m.setStartPoint(Start, End);
+                m.setStarting(m.getStarting() + " / " + ListRooms.get(item)[0]);
+            } else {
+                m.setEndPoint(Start, End);
+                m.setDestination(m.getDestination() + " / " + ListRooms.get(item)[0]);
             }
 
+        }).setOnCancelListener(dialog -> {
+            if(s == 0){
+                m.setStarting(null);
+                m.setStartPoint(null,null);
+            }
+            if(s == 1){
+                m.setDestination(null);
+                m.setEndPoint(null,null);
+            }
+            MDToast mdToast = MDToast.makeText(context, "Żadna sala nie została wybrana", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+            mdToast.setGravity(Gravity.BOTTOM,0,400);
+            mdToast.show();
         });
         m.hideLoading();
         AlertDialog alert = builder.create();
