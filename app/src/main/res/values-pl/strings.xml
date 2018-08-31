@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PWr Nawigacja</string>
+    <string name="not_set_any_point">Wybierz punkt startowy i docelowy</string>
+    <string name="build_route_error">Nie udało się wyszukać drogę</string>
+    <string name="connect_route_error">Błąd połączenia z serwerem</string>
+    <string name="my_location">Moja lokalizacja</string>
+    <string name="teachers">Prowadzący</string>
+    <string name="house_name">Budynki </string>
+    <string name="select_search_source">Wybierz źródło wyszukiwania</string>
+    <string name="select_teacher">Wybór prowadzącego</string>
+    <string name="select_name_and_surname_teacher">Wpisz nazwisko i imię prowadzącego</string>
+    <string name="select_house">Wybierz budynek</string>
+    <string name="no_house_selected_error">Żadny budynek nie został wybrany</string>
+    <string name="week_short">Tyg.</string>
+    <string name="search_teacher_lessons_error">Niestety w systemie niema zajęć dla</string>
+    <string name="select_lessons">Wybierz Zajęcia</string>
+    <string name="search_room_after_select_teacher_error">Nie udało się wyszukać sali :( ale już pracuje nad tym!</string>
+    <string name="select_room">Wybierz sale</string>
+    <string name="room_not_selected">Żadna sala nie została wybrana</string>
+    <string name="connect_server_error">Nie ma polączenia z serwerem</string>
+    <string name="select_start_point">Wybierz punkt startowy</string>
+    <string name="select_end_point">Wybierz punkt docelowy</string>
+    <string name="surname">Nazwisko</string>
+    <string name="house_list_name">Budynek</string>
+</resources>

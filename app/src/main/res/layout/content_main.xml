@@ -74,7 +74,7 @@
                     android:focusable="false"
                     android:focusableInTouchMode="false"
                     android:background="@android:color/transparent"
-                    android:hint="Wybierz punkt startowy" />
+                    android:hint="@string/select_start_point" />
 
                 <View
                     android:layout_width="match_parent"
@@ -92,7 +92,7 @@
                     android:focusable="false"
                     android:focusableInTouchMode="false"
                     android:background="@android:color/transparent"
-                    android:hint="Wybierz punkt docelowy" />
+                    android:hint="@string/select_end_point" />
             </LinearLayout>
             <ImageView
                 android:id="@+id/send"

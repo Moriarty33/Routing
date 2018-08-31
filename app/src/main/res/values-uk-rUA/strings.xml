@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PWr Навігація</string>
+    <string name="select_start_point">Виберіть пункт стартовий</string>
+    <string name="select_end_point">Виберіть пункт призначення</string>
+    <string name="not_set_any_point">Виберіть початкову точку та пункт призначення</string>
+    <string name="build_route_error">Не вдалося знайти дорогу</string>
+    <string name="connect_route_error">Помилка підключення до сервера</string>
+    <string name="my_location">Моє місцезнаходження</string>
+    <string name="teachers">"Вчителі "</string>
+    <string name="house_name">"Будинки "</string>
+    <string name="select_search_source">"Виберіть джерело пошуку "</string>
+    <string name="select_teacher">"Вибрати вчителя "</string>
+    <string name="select_name_and_surname_teacher">"Введіть прізвище та імя вчителя "</string>
+    <string name="select_house">Виберіть будівлю</string>
+    <string name="no_house_selected_error">"Жодна будівля не була вибрана "</string>
+    <string name="week_short">"Тиж. "</string>
+    <string name="search_teacher_lessons_error">"Нажаль в системі немає заннять для "</string>
+    <string name="select_lessons">"Вибери заняття "</string>
+    <string name="search_room_after_select_teacher_error">"Не вдалося знайти кабінет :( але вже працюю над цим "</string>
+    <string name="select_room">"Виберіть кабінет "</string>
+    <string name="room_not_selected">"Кабінет ну був вибраний "</string>
+    <string name="connect_server_error">Помилка підключення до сервера</string>
+    <string name="surname">Прізвище</string>
+    <string name="house_list_name">Будинок</string>
+</resources>

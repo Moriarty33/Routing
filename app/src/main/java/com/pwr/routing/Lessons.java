@@ -1,6 +1,5 @@
 package com.pwr.routing;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.view.Gravity;
@@ -17,20 +16,9 @@ import org.w3c.dom.NodeList;
 
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.Provider;
-import java.security.SecureRandom;
-import java.security.Security;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Objects;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -112,7 +100,7 @@ public class Lessons {
 
                     Element element = (Element) nodes.item(0);
                     if (element.getElementsByTagName("tag").item(1) != null) {
-                        String tag = "Budynek";
+                        String tag = context.getString(R.string.house_list_name);
                         String node = element.getElementsByTagName("nd").item(2).getAttributes().getNamedItem("ref").getNodeValue();
                         String lat = null;
                         String lon = null;
@@ -233,7 +221,7 @@ public class Lessons {
 
     private void notAnswer(){
         ((Activity) context).runOnUiThread(() -> {
-            MDToast mdToast = MDToast.makeText(context, "Nie ma polączenia z serwerem", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+            MDToast mdToast = MDToast.makeText(context, context.getString(R.string.connect_server_error), MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
             mdToast.setGravity(Gravity.BOTTOM,0,400);
             mdToast.show();
         });

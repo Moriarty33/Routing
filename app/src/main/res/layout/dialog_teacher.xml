@@ -17,7 +17,7 @@
             android:layout_marginBottom="25dp"
             android:layout_marginLeft="25dp"
             android:layout_marginRight="25dp"
-            android:hint="Nazwisko"
+            android:hint="@string/surname"
             android:imeOptions="actionDone"
             android:inputType="text" />
 

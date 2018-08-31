@@ -14,7 +14,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
@@ -137,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
                     getRoute(StartPoint, EndPoint);
                     setViewVisibleState(ViewState.NAVIGATION);
                 } else {
-                    message(getString(R.string.NOT_SET_ANY_POINT), MDToast.LENGTH_SHORT, MDToast.TYPE_INFO);
+                    message(getString(R.string.not_set_any_point), MDToast.LENGTH_SHORT, MDToast.TYPE_INFO);
                 }
             });
         });
@@ -419,11 +418,11 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
                         Timber.tag(TAG).d("Response code: %s", response.code());
                         if (response.body() == null) {
                             Timber.tag(TAG).e("No routes found, make sure you set the right user and access token.");
-                            message("Nie udało się wyliczyć drogi.", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+                            message(getString(R.string.build_route_error), MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                             return;
                         } else {
                             if (Objects.requireNonNull(response.body()).routes().size() < 1) {
-                                message("Nie udało się wyliczyć drogi.", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+                                message(getString(R.string.build_route_error), MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                                 return;
                             }
                         }
@@ -448,7 +447,7 @@ public class MainActivity extends AppCompatActivity implements LocationEngineLis
                     @Override
                     public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
                         Timber.tag(TAG).e("Error: %s", throwable.getMessage());
-                        message("Błąd polączenia z serwerem", MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
+                        message(getString(R.string.connect_route_error), MDToast.LENGTH_SHORT, MDToast.TYPE_ERROR);
                     }
                 });
     }

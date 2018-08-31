@@ -1,6 +1,26 @@
 <resources>
     <string name="app_name">PWr Nawigacja</string>
-    <string name="title_activity_main">PWr Nawigacja</string>
     <string name="access_token" translatable="false">pk.eyJ1IjoiYm9nZGFuMzMiLCJhIjoiY2pmc3J3NGRlMG5pODMzcW5hOWYxY3UwMSJ9.mwaBc5Ga8gPnJobIbd9mXw</string>
-    <string name="NOT_SET_ANY_POINT">Wybierz punkt startowy i docelowy</string>
+    <string name="not_set_any_point">Select starting point and destination</string>
+    <string name="build_route_error">Could not find the way</string>
+    <string name="connect_route_error">Server Connection Error</string>
+    <string name="my_location">My location</string>
+    <string name="teachers">Teachers</string>
+    <string name="house_name">Buildings</string>
+    <string name="select_search_source">Select a search source</string>
+    <string name="select_teacher">Select teacher</string>
+    <string name="select_name_and_surname_teacher">Enter the surname and name of the teacher</string>
+    <string name="select_house">Select a building</string>
+    <string name="no_house_selected_error">No building was selected</string>
+    <string name="week_short">Week</string>
+    <string name="search_teacher_lessons_error">Niestety w systemie niema zajęć dla</string>
+    <string name="select_lessons">Choose a lesson</string>
+    <string name="search_room_after_select_teacher_error">Cannot find the room :( But already working on this</string>
+    <string name="select_room">Select a room</string>
+    <string name="room_not_selected">No room was selected</string>
+    <string name="connect_server_error">Server Connection Error</string>
+    <string name="select_start_point">Select starting point</string>
+    <string name="select_end_point">Select destination point</string>
+    <string name="surname">Surname</string>
+    <string name="house_list_name">Building</string>
 </resources>
